@@ -9,13 +9,49 @@ QEMU       := qemu-system-i386
 RUSTC      := cargo +nightly
 TARGET     := arch/i686-none.json
 
+SRC := $(shell find src -name '*.rs')
+
+CYAN := \033[38;5;217m
+ORANGE := \033[38;5;215m
+
+
 .PHONY: all clean run iso rust re reb
+
+draw:
+	@echo "$(ORANGE)⠀⠀⠀ ⠀⠀⠀ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡼⡽⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠠⣠⣢⡧⣏⡿⣽⢯⣿⡷⣧⣦⣦⣤⡤⣯⣯⡏⡇⠀⠀⠀⠀⠀⠀⢠⡃⠀⠀⠐⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢄⣓⡴⣿⡋⠏⠎⠃⠉⠀⠀⠀⠀⠀⠉⠛⠷⡟⡏⣟⡷⡵⣂⠀⠀⠀⠀⢰⣿⠁⠀⠀⠀⠀⠀⡀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢠⣜⣯⣕⠿⠑⠌$(CYAN)⠂⠠⡀⠄⢀$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⠯⣧⣥⣧⣄⣴⣿⡇⠀⠀⠀⠀⠀⠀⣿\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⣄⢝⣏⣕⠏⠁$(CYAN)⠄⡪⠉⠁⢂⣷⡆⣴⣄⠂⡀$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠍⢿⣿⣏⡁⠀⠀⠀⠀⢀⣮⡅\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⢀⣌⣣⡷⡟⠁$(CYAN)⢀⠁⠠⠁⠀⠀⠠⠫⡟⠛⡟⠃⠀⠄$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⡵⣥⣭⣵⣿⣼⡷⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⣀⣯⠏⠏⠃⠀$(CYAN)⣄⠄⣳⡎⢄⢀⣀⡌⢇⣿⣗⡨⡆⡀⠂$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠙⣟⣿⡟⠁⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⢠⠞⠉⠀⠀⠀⠀⠀$(CYAN)⢻⣇⡈⢟⣟⣿⣏⢏⡛⣏⡟⣜⡃⡃⠈$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡸⠀⠉⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀$(CYAN)⠐⣿⣟⣷⣥⣬⣧⣟⡟⡧⡑⢰⣏⡆⠁$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠎⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀$(CYAN)⠣⣻⣍⡍⣖⡝⡇⣃⢪⢔⣩⡣⢁⠁$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣈⠟⠳⣦⡀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀$(CYAN)⠡⠣⣩⣦⣈⣏⡡⣣⢝⠇⠠$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⣀⡤⠒⠁⠀⠀⠀⠇⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀$(CYAN)⠈⠉⠍⡉⠁⡉⡀⠨⠈$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠬⠛⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⣀⡄⠔⠉⠀⠀⠀⠀⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠈⠁⠒⠲⣦⠂⠒⠋⠉⠙⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
+	@echo "$(ORANGE)                       ███            █████   $(CYAN)    ███████     █████████ \033[0m"; sleep 0.05
+	@echo "$(ORANGE)                      ▒▒▒            ▒▒███    $(CYAN)  ███▒▒▒▒▒███  ███▒▒▒▒▒███\033[0m"; sleep 0.05
+	@echo "$(ORANGE)  ████████ █████ ████ ████   ██████  ███████  $(CYAN) ███     ▒▒███▒███    ▒▒▒ \033[0m"; sleep 0.05
+	@echo "$(ORANGE) ███▒▒███ ▒▒███ ▒███ ▒▒███  ███▒▒███▒▒▒███▒   $(CYAN)▒███      ▒███▒▒█████████ \033[0m"; sleep 0.05
+	@echo "$(ORANGE)▒███ ▒███  ▒███ ▒███  ▒███ ▒███████   ▒███    $(CYAN)▒███      ▒███ ▒▒▒▒▒▒▒▒███\033[0m"; sleep 0.05
+	@echo "$(ORANGE)▒███ ▒███  ▒███ ▒███  ▒███ ▒███▒▒▒    ▒███ ███$(CYAN)▒▒███     ███  ███    ▒███\033[0m"; sleep 0.05
+	@echo "$(ORANGE)▒▒███████  ▒▒████████ █████▒▒██████   ▒▒█████ $(CYAN) ▒▒▒███████▒  ▒▒█████████ \033[0m"; sleep 0.05
+	@echo "$(ORANGE) ▒▒▒▒▒███   ▒▒▒▒▒▒▒▒ ▒▒▒▒▒  ▒▒▒▒▒▒     ▒▒▒▒▒  $(CYAN)   ▒▒▒▒▒▒▒     ▒▒▒▒▒▒▒▒▒  \033[0m"; sleep 0.05
+	@echo "$(ORANGE)     ▒███                                                                \033[0m"; sleep 0.05
+	@echo "$(ORANGE)     █████                                                               \033[0m"; sleep 0.05
+	@echo "$(ORANGE)    ▒▒▒▒▒                                                                \033[0m"; sleep 0.05
+
 
 all: run
 
 rust: $(KERNEL)
 
-$(KERNEL):
+$(KERNEL): $(SRC)
 	$(RUSTC) build -Z build-std=core,compiler_builtins --target $(TARGET)
 
 iso: $(ISO)
@@ -29,7 +65,7 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 	grub-mkrescue --compress=xz -o $(ISO) $(ISO_DIR) --modules="normal multiboot part_msdos ext2"
 	@echo "ISO created: $(ISO)"
 
-run: $(ISO)
+run: $(ISO) draw
 	$(QEMU) -cdrom $(ISO) -m 512M
 
 clean:
