@@ -11,6 +11,7 @@ panic = "abort"
 panic = "abort"
 
 [[bin]]
+path = "src/quiet.rs"
 name = "quiet"
 test = false
 bench = false
