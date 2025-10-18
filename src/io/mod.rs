@@ -4,6 +4,7 @@ pub mod console;
 pub mod print;
 
 const VGA_WIDTH: usize = 80;
+#[allow(dead_code)]
 const VGA_HEIGHT: usize = 25;
 
 pub const WHITE: u8 = 0x0f;

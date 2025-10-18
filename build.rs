@@ -7,7 +7,7 @@ fn main() {
     let obj_path = Path::new(&out_dir).join("m_boot_header.o");
 
     let status = Command::new("nasm")
-        .args(&[
+        .args([
             "-felf32",
             "src/m_boot_header.s",
             "-o",

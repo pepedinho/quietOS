@@ -1,7 +1,4 @@
-use core::{
-    cell::UnsafeCell,
-    fmt::{self, Write},
-};
+use core::{cell::UnsafeCell, fmt::Write};
 
 use crate::io::console::Console;
 
@@ -19,7 +16,7 @@ pub fn print(args: core::fmt::Arguments) {
     // use core::fmt::Write;
 
     let console = unsafe { &mut *CONSOLE.console.get() };
-    fmt::write(console, args).unwrap();
+    console.write_fmt(args).unwrap();
 }
 
 #[macro_export]

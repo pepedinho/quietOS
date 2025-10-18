@@ -19,6 +19,17 @@ ORANGE := \033[38;5;215m
 
 all: run
 
+check:
+	$(RUSTC) check 
+
+clippy:
+	$(RUSTC) clippy --all-features -- -D warnings
+
+fmt:
+	$(RUSTC) fmt --all -- --check
+
+v: check clippy fmt
+
 draw:
 	@echo "$(ORANGE)⠀⠀⠀ ⠀⠀⠀ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
 	@echo "$(ORANGE)⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡼⡽⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀\033[0m"; sleep 0.05
