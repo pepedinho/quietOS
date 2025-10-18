@@ -15,7 +15,9 @@ CYAN := \033[38;5;217m
 ORANGE := \033[38;5;215m
 
 
-.PHONY: all clean run iso rust re reb
+.PHONY: all clean run iso rust re reb draw
+
+all: run
 
 draw:
 	@echo "$(ORANGE)⠀⠀⠀ ⠀⠀⠀ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\033[0m"; sleep 0.05
@@ -45,9 +47,6 @@ draw:
 	@echo "$(ORANGE)     ▒███                                                                \033[0m"; sleep 0.05
 	@echo "$(ORANGE)     █████                                                               \033[0m"; sleep 0.05
 	@echo "$(ORANGE)    ▒▒▒▒▒                                                                \033[0m"; sleep 0.05
-
-
-all: run
 
 rust: $(KERNEL)
 
