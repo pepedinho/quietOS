@@ -1,8 +1,9 @@
 use core::fmt::{Display, Write};
 
-use crate::io::Writer;
+use crate::io::{Writer, keyborad::Read};
 
 const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
+const ERASE_BYTE: u8 = 0x00;
 
 #[derive(Default)]
 pub enum Color {
@@ -112,6 +113,10 @@ impl Console {
         }
     }
 
+    pub fn relace_byte(&mut self, byte: u8) {
+        self.writer.put_byte(byte, &mut self.cursor, &self.color);
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         self.writer.write_byte(byte, &mut self.cursor, &self.color);
     }
@@ -123,6 +128,17 @@ impl Console {
     fn nl(&mut self) {
         self.cursor.x = 0;
         self.cursor.y += 1;
+        self.writer.move_cursor(&self.cursor);
+    }
+
+    fn back_space(&mut self) {
+        if self.cursor.x > 0 {
+            self.cursor.x -= 1;
+        } else if self.cursor.y > 0 {
+            self.cursor.y -= 1;
+        }
+        self.relace_byte(ERASE_BYTE);
+        self.writer.move_cursor(&self.cursor);
     }
 
     fn handle_byte(&mut self, byte: u8) {
@@ -132,6 +148,7 @@ impl Console {
                 self.state = State::Esc;
             }
             b'\t' => self.write_string("    "),
+            8 => self.back_space(),
             b' '..=b'~' => self.handle_escape_byte(byte),
             _ => {} // non printable
         }
@@ -205,3 +222,5 @@ impl Write for Console {
         Ok(())
     }
 }
+
+impl Read for Console {}
