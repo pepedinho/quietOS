@@ -92,7 +92,6 @@ const AZERTY_SCANCODES: [Option<u8>; 128] = {
 
 pub trait Read {
     fn has_data(&mut self) -> bool {
-        // Le bit 0 de 0x64 indique si le buffer de données est prêt
         unsafe { (VGA::inb(0x64) & 1) != 0 }
     }
 
