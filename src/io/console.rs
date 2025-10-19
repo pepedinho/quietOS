@@ -101,14 +101,16 @@ pub struct ColorPair {
     background: Color,
 }
 
-impl ColorPair {
-    pub fn default() -> Self {
+impl Default for ColorPair {
+    fn default() -> Self {
         Self {
             foreground: Color::White,
             background: Color::Black,
         }
     }
+}
 
+impl ColorPair {
     pub fn shift(&self) -> u8 {
         let fg = self.foreground.as_vga();
         let bg = self.background.as_vga();
