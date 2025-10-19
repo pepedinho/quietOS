@@ -145,3 +145,42 @@ jobs:
 
       - name: Build kernel
         run: cargo +$RUST_TOOLCHAIN build -Z build-std=core,compiler_builtins --target $TARGET_FILE
+  
+  boot-test:
+    name: Boot test kernel with QEMU
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-x86
+
+      - name: Restore NASM
+        uses: actions/cache@v4
+        with:
+          path: nasm-bin
+          key: nasm-2.16.01
+      - run: |
+          sudo cp nasm-bin/nasm /usr/local/bin/
+          sudo chmod +x /usr/local/bin/nasm
+
+      - name: Install Rust nightly
+        run: |
+          rustup toolchain install nightly
+          rustup component add rust-src --toolchain nightly
+
+      - name: Build kernel
+        run: cargo +nightly build -Z build-std=core,compiler_builtins --target $TARGET_FILE
+
+      - name: Boot kernel in QEMU
+        run: |
+          qemu-system-x86_64 \
+            -kernel target/x86_64-my-kernel/debug/<kernel_binary> \
+            -serial stdio \
+            -nographic \
+            -no-reboot \
+            -monitor none \
+            -m 512M \
+            -smp 1 \
+            -device isa-debug-exit,iobase=0xf4,iosize=0x04
