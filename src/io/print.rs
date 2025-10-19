@@ -3,12 +3,12 @@ use core::{cell::UnsafeCell, fmt::Write};
 use crate::io::console::Console;
 
 pub struct GlobalConsole {
-    console: UnsafeCell<Console>,
+    pub console: UnsafeCell<Console>,
 }
 
 unsafe impl Sync for GlobalConsole {}
 
-static CONSOLE: GlobalConsole = GlobalConsole {
+pub static CONSOLE: GlobalConsole = GlobalConsole {
     console: UnsafeCell::new(Console::new()),
 };
 
