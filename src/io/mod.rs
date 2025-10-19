@@ -60,7 +60,7 @@ impl Writer {
             pos.x = 0;
             pos.y += 1;
         }
-        self.move_cursor(&pos);
+        self.move_cursor(pos);
     }
 
     pub fn put_byte(&mut self, byte: u8, pos: &mut Pos, color: &Color) {
