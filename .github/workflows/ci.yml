@@ -156,7 +156,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y make qemu-system-x86 nasm grub-common xorriso
+          sudo apt-get install -y make qemu-system-x86 nasm grub-common xorriso mtools
 
       - name: Install Rust nightly
         run: |
