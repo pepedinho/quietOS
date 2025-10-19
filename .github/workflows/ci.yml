@@ -1,0 +1,94 @@
+name: QuietOS CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  fmt:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nightly Rust toolchain
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+      - name: Run cargo fmt
+        run: cargo +nightly fmt --all -- --check
+
+  clippy:
+    name: Clippy linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Install nightly Rust toolchain
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+      - name: Install rust-src
+        run: rustup component add rust-src --toolchain nightly
+      - name: Run cargo clippy
+        run: cargo +nightly clippy --all-features -- -D warnings
+
+  check:
+    name: Cargo check (nightly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Install nightly Rust toolchain
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+      - name: Install rust-src
+        run: rustup component add rust-src --toolchain nightly
+      - name: Run cargo check
+        run: cargo +nightly check --all-targets --all-features
+
+  build:
+    name: Build kernel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Install nightly Rust toolchain
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+      - name: Install rust-src
+        run: rustup component add rust-src --toolchain nightly
+      - name: Build kernel
+        run: cargo +nightly build -Z build-std=core,compiler_builtins --target x86_64-my-kernel.json
