@@ -8,87 +8,83 @@ on:
     branches:
       - "**"
 
+env:
+  RUST_TOOLCHAIN: nightly
+  TARGET_FILE: arch/i686-none.json
+
 jobs:
   fmt:
     name: Check code formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install nightly Rust toolchain
+
+      - name: Install Rust nightly with rustfmt
         run: |
-          rustup toolchain install nightly
-          rustup default nightly
+          rustup toolchain install $RUST_TOOLCHAIN
+          rustup component add rustfmt --toolchain $RUST_TOOLCHAIN
+
       - name: Run cargo fmt
-        run: cargo +nightly fmt --all -- --check
+        run: cargo +$RUST_TOOLCHAIN fmt --all -- --check
 
   clippy:
     name: Clippy linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Install nightly Rust toolchain
+
+      - name: Install Rust nightly with clippy
         run: |
-          rustup toolchain install nightly
-          rustup default nightly
-      - name: Install rust-src
-        run: rustup component add rust-src --toolchain nightly
+          rustup toolchain install $RUST_TOOLCHAIN
+          rustup component add clippy --toolchain $RUST_TOOLCHAIN
+
       - name: Run cargo clippy
-        run: cargo +nightly clippy --all-features -- -D warnings
+        run: cargo +$RUST_TOOLCHAIN clippy --all-features -- -D warnings
 
   check:
-    name: Cargo check (nightly)
+    name: Cargo check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Install nightly Rust toolchain
+
+      - name: Install dependencies
         run: |
-          rustup toolchain install nightly
-          rustup default nightly
-      - name: Install rust-src
-        run: rustup component add rust-src --toolchain nightly
-      - name: Run cargo check
-        run: cargo +nightly check --all-targets --all-features
+          sudo apt-get update
+          sudo apt-get install -y nasm
+
+      - name: Install Rust nightly
+        run: rustup toolchain install $RUST_TOOLCHAIN
+
+      - name: Ensure target file exists
+        run: |
+          if [ ! -f $TARGET_FILE ]; then
+            echo "Target file $TARGET_FILE missing!"
+            exit 1
+          fi
+
+      - name: Cargo check
+        run: cargo +$RUST_TOOLCHAIN check --all-targets --all-features
 
   build:
-    name: Build kernel
+    name: Kernel build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Install nightly Rust toolchain
+
+      - name: Install dependencies
         run: |
-          rustup toolchain install nightly
-          rustup default nightly
-      - name: Install rust-src
-        run: rustup component add rust-src --toolchain nightly
+          sudo apt-get update
+          sudo apt-get install -y nasm
+
+      - name: Install Rust nightly
+        run: rustup toolchain install $RUST_TOOLCHAIN
+
+      - name: Ensure target file exists
+        run: |
+          if [ ! -f $TARGET_FILE ]; then
+            echo "Target file $TARGET_FILE missing!"
+            exit 1
+          fi
+
       - name: Build kernel
-        run: cargo +nightly build -Z build-std=core,compiler_builtins --target x86_64-my-kernel.json
+        run: cargo +$RUST_TOOLCHAIN build -Z build-std=core,compiler_builtins --target $TARGET_FILE
