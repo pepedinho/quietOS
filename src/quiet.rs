@@ -8,8 +8,6 @@ use quiet::{
     println,
 };
 
-// const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
-
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     println!(
@@ -18,6 +16,7 @@ pub extern "C" fn _entrypoint() -> ! {
         Color::BRed,
         Color::White
     );
+    println!("\x1B[34;41mtests\x1B[0m");
     let console = unsafe { &mut *CONSOLE.console.get() };
     console.read_stdin();
     // #[allow(clippy::empty_loop)]

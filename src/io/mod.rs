@@ -1,4 +1,4 @@
-use crate::io::console::{Color, Pos};
+use crate::io::console::{ColorPair, Pos};
 
 pub mod console;
 pub mod keyborad;
@@ -63,14 +63,14 @@ impl Writer {
         self.move_cursor(pos);
     }
 
-    pub fn put_byte(&mut self, byte: u8, pos: &mut Pos, color: &Color) {
+    pub fn put_byte(&mut self, byte: u8, pos: &mut Pos, color: &ColorPair) {
         unsafe {
             *self.buffer.add(pos.y * VGA_WIDTH * 2 + pos.x * 2) = byte;
-            *self.buffer.add(pos.y * VGA_WIDTH * 2 + pos.x * 2 + 1) = color.as_vga();
+            *self.buffer.add(pos.y * VGA_WIDTH * 2 + pos.x * 2 + 1) = color.shift();
         }
     }
 
-    pub fn write_byte(&mut self, byte: u8, pos: &mut Pos, color: &Color) {
+    pub fn write_byte(&mut self, byte: u8, pos: &mut Pos, color: &ColorPair) {
         self.put_byte(byte, pos, color);
         self.update_pos(pos);
     }
