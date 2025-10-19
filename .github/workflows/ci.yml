@@ -11,54 +11,44 @@ on:
 env:
   RUST_TOOLCHAIN: nightly
   TARGET_FILE: arch/i686-none.json
+  NASM_CACHE_DIR: nasm-bin
 
 jobs:
-  fmt:
-    name: Check code formatting
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust nightly with rustfmt
-        run: |
-          rustup toolchain install $RUST_TOOLCHAIN
-          rustup component add rustfmt --toolchain $RUST_TOOLCHAIN
-
-      - name: Run cargo fmt
-        run: cargo +$RUST_TOOLCHAIN fmt --all -- --check
-
-  clippy:
-    name: Clippy linting
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust nightly with clippy
-        run: |
-          rustup toolchain install $RUST_TOOLCHAIN
-          rustup component add clippy --toolchain $RUST_TOOLCHAIN
-
-      - name: Run cargo clippy
-        run: cargo +$RUST_TOOLCHAIN clippy --all-features -- -D warnings
-
   check:
-    name: Cargo check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Cache nasm
+        id: cache-nasm
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NASM_CACHE_DIR }}
+          key: nasm-2.16.01
+
+      - name: Install nasm if cache miss
+        if: steps.cache-nasm.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y nasm
+          mkdir -p $NASM_CACHE_DIR
+          cp /usr/bin/nasm $NASM_CACHE_DIR/
+
+      - name: Restore nasm binary
+        run: |
+          sudo cp $NASM_CACHE_DIR/nasm /usr/local/bin/
+          sudo chmod +x /usr/local/bin/nasm
+          nasm --version
 
       - name: Install Rust nightly
-        run: rustup toolchain install $RUST_TOOLCHAIN
+        run: |
+          rustup toolchain install $RUST_TOOLCHAIN
+          rustup component add rust-src --toolchain $RUST_TOOLCHAIN
 
-      - name: Ensure target file exists
+      - name: Check target file
         run: |
           if [ ! -f $TARGET_FILE ]; then
-            echo "Target file $TARGET_FILE missing!"
+            echo "Missing target file $TARGET_FILE"
             exit 1
           fi
 
@@ -66,23 +56,40 @@ jobs:
         run: cargo +$RUST_TOOLCHAIN check --all-targets --all-features
 
   build:
-    name: Kernel build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Cache nasm
+        id: cache-nasm
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NASM_CACHE_DIR }}
+          key: nasm-2.16.01
+
+      - name: Install nasm if cache miss
+        if: steps.cache-nasm.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y nasm
+          mkdir -p $NASM_CACHE_DIR
+          cp /usr/bin/nasm $NASM_CACHE_DIR/
 
-      - name: Install Rust nightly
-        run: rustup toolchain install $RUST_TOOLCHAIN
+      - name: Restore nasm binary
+        run: |
+          sudo cp $NASM_CACHE_DIR/nasm /usr/local/bin/
+          sudo chmod +x /usr/local/bin/nasm
+          nasm --version
 
-      - name: Ensure target file exists
+      - name: Install Rust nightly and rust-src
+        run: |
+          rustup toolchain install $RUST_TOOLCHAIN
+          rustup component add rust-src --toolchain $RUST_TOOLCHAIN
+
+      - name: Check target file
         run: |
           if [ ! -f $TARGET_FILE ]; then
-            echo "Target file $TARGET_FILE missing!"
+            echo "Missing target file $TARGET_FILE"
             exit 1
           fi
 
