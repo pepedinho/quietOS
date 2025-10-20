@@ -145,3 +145,17 @@ jobs:
 
       - name: Build kernel
         run: cargo +$RUST_TOOLCHAIN build -Z build-std=core,compiler_builtins --target $TARGET_FILE
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        run: |
+          rustup toolchain install $RUST_TOOLCHAIN
+          rustup component add rust-src --toolchain $RUST_TOOLCHAIN
+          rustup component add llvm-tools-preview --toolchain $RUST_TOOLCHAIN
+
+      - name: Run cargo tests
+        run: cargo +$RUST_TOOLCHAIN test

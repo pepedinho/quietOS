@@ -1,4 +1,7 @@
-use crate::io::{VGA, console::Console};
+use crate::io::{
+    VGA,
+    console::{Console, writer::WriterSoul},
+};
 
 #[warn(dead_code)]
 pub const QWERTY_SCANCODES: [Option<u8>; 128] = {
@@ -121,7 +124,7 @@ fn scancode_to_ascii(scancode: u8) -> Option<u8> {
     AZERTY_SCANCODES.get(scancode as usize).copied().flatten()
 }
 
-impl Console {
+impl<W: WriterSoul> Console<W> {
     pub fn read_stdin(&mut self) -> ! {
         loop {
             if let Some(scancode) = self.read_byte()

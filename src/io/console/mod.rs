@@ -1,75 +1,23 @@
-use core::fmt::{Display, Write};
+use crate::io::{
+    VGA_HEIGHT, VGA_WIDTH,
+    console::{
+        colors::{Color, ColorPair},
+        utils::U8CellLen,
+        writer::WriterSoul,
+    },
+    keyborad::Read,
+};
+use core::fmt::Write;
 
-use crate::io::{Writer, keyborad::Read};
-
-const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
 const ERASE_BYTE: u8 = 0x00;
+const CONSOLE_HISTORY: usize = 100;
 
-#[derive(Default)]
-pub enum Color {
-    #[default]
-    White,
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    BBlack,
-    BRed,
-    BGreen,
-    BYellow,
-    BBlue,
-    BMagenta,
-    BCyan,
-}
+pub mod colors;
+pub mod utils;
+pub mod writer;
 
-impl Display for Color {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let code = match self {
-            Color::White => "0",
-            Color::Black => "30",
-            Color::Red => "31",
-            Color::Green => "32",
-            Color::Yellow => "33",
-            Color::Blue => "34",
-            Color::Magenta => "35",
-            Color::Cyan => "36",
-            Color::BBlack => "40",
-            Color::BRed => "91",
-            Color::BGreen => "92",
-            Color::BYellow => "93",
-            Color::BBlue => "94",
-            Color::BMagenta => "95",
-            Color::BCyan => "96",
-        };
-
-        write!(f, "\x1B[{}m", code)
-    }
-}
-
-impl Color {
-    pub fn as_vga(&self) -> u8 {
-        match self {
-            Color::Black => 0x00,
-            Color::White => 0x0f,
-            Color::Blue => 0x01,
-            Color::Green => 0x02,
-            Color::Cyan => 0x03,
-            Color::Red => 0x04,
-            Color::Magenta => 0x05,
-            Color::Yellow => 0x06,
-            Color::BBlack => 0x08,
-            Color::BBlue => 0x09,
-            Color::BGreen => 0x0a,
-            Color::BCyan => 0x0b,
-            Color::BRed => 0x0c,
-            Color::BMagenta => 0x0d,
-            Color::BYellow => 0x0e,
-        }
-    }
-}
+#[cfg(test)]
+pub mod tests;
 
 #[derive(Clone, Copy)]
 pub enum CSI {
@@ -84,54 +32,45 @@ pub enum State {
     CSI(CSI),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct Pos {
     pub x: usize,
     pub y: usize,
 }
 
 impl Pos {
-    pub const fn new() -> Pos {
+    pub fn new(x: usize, y: usize) -> Self {
+        Pos { x, y }
+    }
+
+    pub const fn blank() -> Self {
         Pos { x: 0, y: 0 }
     }
-}
 
-pub struct ColorPair {
-    foreground: Color,
-    background: Color,
-}
-
-impl Default for ColorPair {
-    fn default() -> Self {
-        Self {
-            foreground: Color::White,
-            background: Color::Black,
+    fn inc(&mut self, offset: usize) -> bool {
+        self.x += 1;
+        if self.x >= VGA_WIDTH {
+            self.x = 0;
+            self.y += 1;
+            if self.y == offset + VGA_HEIGHT {
+                return true;
+            }
+            return false;
         }
+        false
     }
 }
 
-impl ColorPair {
-    pub fn shift(&self) -> u8 {
-        let fg = self.foreground.as_vga();
-        let bg = self.background.as_vga();
-        (bg << 4) | fg
-    }
+#[derive(Clone, Copy)]
+pub struct Cell {
+    pub byte: u8,
+    pub color: ColorPair,
 }
 
-pub struct Console {
-    writer: Writer,
-    color: ColorPair,
-    state: State,
-    cursor: Pos,
-}
-
-impl Console {
-    #[allow(clippy::new_without_default)]
-    pub const fn new() -> Self {
-        Self {
-            writer: Writer::new(VGA_BUFFER),
-            state: State::Default,
-            cursor: Pos::new(),
+impl Cell {
+    pub const fn blank() -> Self {
+        Cell {
+            byte: 0,
             color: ColorPair {
                 foreground: Color::White,
                 background: Color::Black,
@@ -139,32 +78,102 @@ impl Console {
         }
     }
 
-    pub fn relace_byte(&mut self, byte: u8) {
-        self.writer.put_byte(byte, &mut self.cursor, &self.color);
+    pub fn new(byte: u8, color: ColorPair) -> Self {
+        Cell { byte, color }
+    }
+}
+
+pub struct Console<W: WriterSoul> {
+    buffer: [[Cell; VGA_WIDTH]; CONSOLE_HISTORY],
+    cursor: Pos,
+    // the visible window start at [offset] & end at [VGA_HEIGHT + offset]
+    offset: usize, // the index of the first visible line (all lines behind will be hidden)
+
+    writer: W,
+    color: ColorPair,
+    state: State,
+}
+
+impl<W: WriterSoul> Console<W> {
+    #[allow(clippy::new_without_default)]
+    pub const fn new(writer: W) -> Self {
+        Self {
+            buffer: [[Cell::blank(); VGA_WIDTH]; CONSOLE_HISTORY],
+            cursor: Pos::blank(),
+            offset: 0,
+            writer,
+            state: State::Default,
+            color: ColorPair {
+                foreground: Color::White,
+                background: Color::Black,
+            },
+        }
     }
 
-    pub fn write_byte(&mut self, byte: u8) {
-        self.writer.write_byte(byte, &mut self.cursor, &self.color);
+    pub fn replace_byte(&mut self, byte: u8) {
+        self.buffer[self.cursor.y][self.cursor.x] = Cell::new(byte, self.color);
+    }
+
+    pub fn store_byte(&mut self, byte: u8) {
+        self.buffer[self.cursor.y][self.cursor.x] = Cell::new(byte, self.color);
+        if self.cursor.inc(self.offset) {
+            // if the line is full
+            self.scroll_offset_down();
+            self.flush();
+        };
+    }
+
+    pub fn flush(&mut self) {
+        for row in 0..VGA_HEIGHT {
+            for col in 0..VGA_WIDTH {
+                let ch = self.buffer[self.offset + row][col];
+                self.write_byte(&ch, &Pos::new(col, row));
+            }
+        }
+        self.move_cursor();
+    }
+
+    fn move_cursor(&mut self) {
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
+    }
+
+    pub fn write_byte(&mut self, cell: &Cell, pos: &Pos) {
+        self.writer.write_byte(cell, pos.x, pos.y);
     }
 
     pub fn write_string(&mut self, s: &str) {
         s.bytes().for_each(|b| self.handle_byte(b));
+        self.flush();
     }
 
     fn nl(&mut self) {
         self.cursor.x = 0;
         self.cursor.y += 1;
-        self.writer.move_cursor(&self.cursor);
+        if self.cursor.y >= VGA_HEIGHT {
+            if self.cursor.y == VGA_HEIGHT + self.offset {
+                self.scroll_offset_down();
+            }
+            self.flush();
+        }
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
+    }
+
+    fn scroll_offset_down(&mut self) {
+        if self.offset < CONSOLE_HISTORY - VGA_HEIGHT {
+            self.offset += 1;
+        }
     }
 
     fn back_space(&mut self) {
         if self.cursor.x > 0 {
             self.cursor.x -= 1;
         } else if self.cursor.y > 0 {
+            self.cursor.x = self.buffer[self.cursor.y - 1].cell_len();
             self.cursor.y -= 1;
         }
-        self.relace_byte(ERASE_BYTE);
-        self.writer.move_cursor(&self.cursor);
+        self.replace_byte(ERASE_BYTE);
+        self.flush();
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
     }
 
     fn handle_byte(&mut self, byte: u8) {
@@ -223,7 +232,9 @@ impl Console {
 
     fn handle_escape_byte(&mut self, byte: u8) {
         match &self.state {
-            State::Default => self.write_byte(byte),
+            State::Default => {
+                self.store_byte(byte);
+            }
             State::Esc => match byte {
                 b'[' => self.state = State::CSI(CSI::None), // start CSI sequence
                 _ => self.state = State::Default,           // no implemented yet
@@ -269,11 +280,11 @@ impl Console {
     }
 }
 
-impl Write for Console {
+impl<W: WriterSoul> Write for Console<W> {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_string(s);
         Ok(())
     }
 }
 
-impl Read for Console {}
+impl<W: WriterSoul> Read for Console<W> {}
