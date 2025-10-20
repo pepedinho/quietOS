@@ -47,12 +47,17 @@ impl Pos {
         Pos { x: 0, y: 0 }
     }
 
-    fn inc(&mut self) {
+    fn inc(&mut self, offset: usize) -> bool {
         self.x += 1;
         if self.x >= VGA_WIDTH {
             self.x = 0;
             self.y += 1;
+            if self.y == offset + VGA_HEIGHT {
+                return true;
+            }
+            return false;
         }
+        false
     }
 }
 
@@ -111,7 +116,11 @@ impl<W: WriterSoul> Console<W> {
 
     pub fn store_byte(&mut self, byte: u8) {
         self.buffer[self.cursor.y][self.cursor.x] = Cell::new(byte, self.color);
-        self.cursor.inc();
+        if self.cursor.inc(self.offset) {
+            // if the line is full
+            self.scroll_offset_down();
+            self.flush();
+        };
     }
 
     pub fn flush(&mut self) {
@@ -141,7 +150,9 @@ impl<W: WriterSoul> Console<W> {
         self.cursor.x = 0;
         self.cursor.y += 1;
         if self.cursor.y >= VGA_HEIGHT {
-            self.scroll_offset_down();
+            if self.cursor.y == VGA_HEIGHT + self.offset {
+                self.scroll_offset_down();
+            }
             self.flush();
         }
         self.writer.move_cursor(&self.cursor, Some(self.offset));
