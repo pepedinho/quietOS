@@ -4,7 +4,7 @@
 use core::panic::PanicInfo;
 
 use quiet::{
-    io::{console::Color, print::CONSOLE},
+    io::{console::colors::Color, print::CONSOLE},
     println,
 };
 

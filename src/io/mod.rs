@@ -1,4 +1,4 @@
-use crate::io::console::{ColorPair, Pos};
+use crate::io::console::{Cell, Pos};
 
 pub mod console;
 pub mod keyborad;
@@ -54,25 +54,11 @@ impl Writer {
         Self { buffer: buf }
     }
 
-    fn update_pos(&mut self, pos: &mut Pos) {
-        pos.x += 1;
-        if pos.x >= VGA_WIDTH {
-            pos.x = 0;
-            pos.y += 1;
-        }
-        self.move_cursor(pos);
-    }
-
-    pub fn put_byte(&mut self, byte: u8, pos: &mut Pos, color: &ColorPair) {
+    pub fn write_byte(&mut self, cell: &Cell, x: usize, y: usize) {
         unsafe {
-            *self.buffer.add(pos.y * VGA_WIDTH * 2 + pos.x * 2) = byte;
-            *self.buffer.add(pos.y * VGA_WIDTH * 2 + pos.x * 2 + 1) = color.shift();
+            *self.buffer.add(y * VGA_WIDTH * 2 + x * 2) = cell.byte;
+            *self.buffer.add(y * VGA_WIDTH * 2 + x * 2 + 1) = cell.color.shift();
         }
-    }
-
-    pub fn write_byte(&mut self, byte: u8, pos: &mut Pos, color: &ColorPair) {
-        self.put_byte(byte, pos, color);
-        self.update_pos(pos);
     }
 
     //----------------
@@ -100,7 +86,7 @@ impl Writer {
         }
     }
 
-    fn move_cursor(&mut self, p: &Pos) {
+    pub fn move_cursor(&mut self, p: &Pos) {
         let pos = (p.y * VGA_WIDTH + p.x) as u16;
         unsafe {
             VGA::outb(VGA_CMD_PORT, 0x0F);
