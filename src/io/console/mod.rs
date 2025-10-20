@@ -2,6 +2,7 @@ use crate::io::{
     VGA_HEIGHT, VGA_WIDTH,
     console::{
         colors::{Color, ColorPair},
+        utils::U8CellLen,
         writer::WriterSoul,
     },
     keyborad::Read,
@@ -12,6 +13,7 @@ const ERASE_BYTE: u8 = 0x00;
 const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
+pub mod utils;
 pub mod writer;
 
 #[cfg(test)]
@@ -123,7 +125,7 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn move_cursor(&mut self) {
-        self.writer.move_cursor(&self.cursor);
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
     }
 
     pub fn write_byte(&mut self, cell: &Cell, pos: &Pos) {
@@ -138,18 +140,29 @@ impl<W: WriterSoul> Console<W> {
     fn nl(&mut self) {
         self.cursor.x = 0;
         self.cursor.y += 1;
-        self.writer.move_cursor(&self.cursor);
+        if self.cursor.y >= VGA_HEIGHT {
+            self.scroll_offset_down();
+            self.flush();
+        }
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
+    }
+
+    fn scroll_offset_down(&mut self) {
+        if self.offset < CONSOLE_HISTORY - VGA_HEIGHT {
+            self.offset += 1;
+        }
     }
 
     fn back_space(&mut self) {
         if self.cursor.x > 0 {
             self.cursor.x -= 1;
         } else if self.cursor.y > 0 {
+            self.cursor.x = self.buffer[self.cursor.y - 1].cell_len();
             self.cursor.y -= 1;
         }
         self.replace_byte(ERASE_BYTE);
         self.flush();
-        self.writer.move_cursor(&self.cursor);
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
     }
 
     fn handle_byte(&mut self, byte: u8) {

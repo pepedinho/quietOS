@@ -17,7 +17,7 @@ impl Writer {
 
 pub trait WriterSoul {
     fn write_byte(&mut self, cell: &Cell, x: usize, y: usize);
-    fn move_cursor(&mut self, pos: &Pos);
+    fn move_cursor(&mut self, pos: &Pos, offset: Option<usize>);
     fn enable_cursor(&mut self, start: u8, end: u8);
     fn disable_cursor(&mut self);
 }
@@ -55,8 +55,9 @@ impl WriterSoul for Writer {
         }
     }
 
-    fn move_cursor(&mut self, p: &Pos) {
-        let pos = (p.y * VGA_WIDTH + p.x) as u16;
+    fn move_cursor(&mut self, p: &Pos, offset: Option<usize>) {
+        let ofs = offset.unwrap_or(0);
+        let pos = ((p.y - ofs) * VGA_WIDTH + p.x) as u16;
         unsafe {
             VGA::outb(VGA_CMD_PORT, 0x0F);
             VGA::outb(VGA_DATA_PORT, (pos & 0xFF) as u8);

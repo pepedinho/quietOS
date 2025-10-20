@@ -10,12 +10,14 @@ use quiet::{
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
+    println!("+-----------------------------------------+");
     println!(
-        "Welcome to {}Quiet Os\n{}42{}",
+        "|        Welcome to {}Quiet Os {}42{}           |",
         Color::Yellow,
         Color::BRed,
         Color::White
     );
+    println!("+-----------------------------------------+");
     println!("\x1B[34;41mtests\x1B[0m");
     let console = unsafe { &mut *CONSOLE.console.get() };
     console.read_stdin();
