@@ -1,15 +1,21 @@
 use crate::io::{
-    VGA_HEIGHT, VGA_WIDTH, Writer,
-    console::colors::{Color, ColorPair},
+    VGA_HEIGHT, VGA_WIDTH,
+    console::{
+        colors::{Color, ColorPair},
+        writer::WriterSoul,
+    },
     keyborad::Read,
 };
 use core::fmt::Write;
 
-const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
 const ERASE_BYTE: u8 = 0x00;
 const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
+pub mod writer;
+
+#[cfg(test)]
+pub mod tests;
 
 #[derive(Clone, Copy)]
 pub enum CSI {
@@ -70,25 +76,25 @@ impl Cell {
     }
 }
 
-pub struct Console {
+pub struct Console<W: WriterSoul> {
     buffer: [[Cell; VGA_WIDTH]; CONSOLE_HISTORY],
     cursor: Pos,
     // the visible window start at [offset] & end at [VGA_HEIGHT + offset]
     offset: usize, // the index of the first visible line (all lines behind will be hidden)
 
-    writer: Writer,
+    writer: W,
     color: ColorPair,
     state: State,
 }
 
-impl Console {
+impl<W: WriterSoul> Console<W> {
     #[allow(clippy::new_without_default)]
-    pub const fn new() -> Self {
+    pub const fn new(writer: W) -> Self {
         Self {
             buffer: [[Cell::blank(); VGA_WIDTH]; CONSOLE_HISTORY],
             cursor: Pos::blank(),
             offset: 0,
-            writer: Writer::new(VGA_BUFFER),
+            writer,
             state: State::Default,
             color: ColorPair {
                 foreground: Color::White,
@@ -250,11 +256,11 @@ impl Console {
     }
 }
 
-impl Write for Console {
+impl<W: WriterSoul> Write for Console<W> {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_string(s);
         Ok(())
     }
 }
 
-impl Read for Console {}
+impl<W: WriterSoul> Read for Console<W> {}

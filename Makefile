@@ -28,6 +28,9 @@ clippy:
 fmt:
 	$(RUSTC) fmt --all -- --check
 
+test:
+	$(RUSTC) test 
+
 v: check clippy fmt
 
 draw:
