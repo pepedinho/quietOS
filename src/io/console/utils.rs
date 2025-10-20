@@ -1,4 +1,4 @@
-use crate::{io::console::Cell, println};
+use crate::io::console::Cell;
 
 pub trait U8CellLen {
     fn cell_len(&self) -> usize;
