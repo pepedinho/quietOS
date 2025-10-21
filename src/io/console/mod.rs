@@ -161,11 +161,14 @@ impl<W: WriterSoul> Console<W> {
     fn scroll_offset_down(&mut self) {
         if self.offset < CONSOLE_HISTORY - VGA_HEIGHT {
             self.offset += 1;
+            if self.cursor.y < self.offset {
+                self.cursor.y = self.offset;
+            }
         }
     }
 
     fn scroll_offset_up(&mut self) {
-        if self.cursor.y > 0 {
+        if self.cursor.y > 0 && self.offset > 0 {
             self.offset -= 1;
         }
     }
@@ -319,6 +322,14 @@ impl<W: WriterSoul> Console<W> {
                             b'm' => match c {
                                 CSI::None | CSI::Err => self.color = ColorPair::default(),
                                 CSI::Some(n) => self.apply_csi(*n),
+                            },
+                            b'~' => match c {
+                                CSI::Some(n) => match n {
+                                    5 => self.scroll_offset_up(),
+                                    6 => self.scroll_offset_down(),
+                                    _ => {}
+                                },
+                                _ => {}
                             },
                             _ => {}
                         }
