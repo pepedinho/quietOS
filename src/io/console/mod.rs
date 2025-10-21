@@ -323,14 +323,15 @@ impl<W: WriterSoul> Console<W> {
                                 CSI::None | CSI::Err => self.color = ColorPair::default(),
                                 CSI::Some(n) => self.apply_csi(*n),
                             },
-                            b'~' => match c {
-                                CSI::Some(n) => match n {
-                                    5 => self.scroll_offset_up(),
-                                    6 => self.scroll_offset_down(),
-                                    _ => {}
-                                },
-                                _ => {}
-                            },
+                            b'~' => {
+                                if let CSI::Some(n) = c {
+                                    match n {
+                                        5 => self.scroll_offset_up(),
+                                        6 => self.scroll_offset_down(),
+                                        _ => {}
+                                    }
+                                }
+                            }
                             _ => {}
                         }
                         State::Default
