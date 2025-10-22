@@ -8,12 +8,15 @@ const TEST_WIDTH: usize = 80;
 // const TEST_HEIGHT: usize = 3;
 const TEST_HISTORY: usize = 100;
 
-fn make_console() -> Console<MockWriter> {
+pub fn make_console() -> Console<MockWriter> {
     Console {
         buffer: [[Cell::blank(); TEST_WIDTH]; TEST_HISTORY],
         cursor: Pos::blank(),
         offset: 0,
-        writer: MockWriter {},
+        writer: MockWriter {
+            last_pos: None,
+            underflow_detected: false,
+        },
         color: ColorPair {
             foreground: Color::White,
             background: Color::Black,

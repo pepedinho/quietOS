@@ -1,6 +1,6 @@
 use core::fmt::Display;
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, PartialEq, Debug)]
 pub enum Color {
     #[default]
     White,
