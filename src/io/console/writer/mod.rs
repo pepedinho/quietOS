@@ -58,7 +58,7 @@ impl WriterSoul for Writer {
     fn move_cursor(&mut self, p: &Pos, offset: Option<usize>) {
         let ofs = offset.unwrap_or(0);
         if p.y < ofs {
-            return; // avoid panic the cursor is not visible
+            return; // avoid panic when  the cursor is not visible
         }
         let pos = ((p.y - ofs) * VGA_WIDTH + p.x) as u16;
         unsafe {
