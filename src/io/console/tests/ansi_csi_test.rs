@@ -1,7 +1,7 @@
 use crate::io::{
     VGA_HEIGHT,
     console::{
-        Cell,
+        CONSOLE_HISTORY, CSI, Cell, State,
         colors::{Color, ColorPair},
         tests::buffer_test::make_console,
     },
@@ -118,4 +118,49 @@ fn test_parse_csi_page_up_down() {
 
     console.write_string(b"\x1B[6~");
     assert_eq!(console.offset, 5);
+}
+
+#[test]
+fn test_parse_csi_long_number() {
+    let mut console = make_console();
+    console.write_string(b"\x1B[123m");
+
+    // 123 is not a supported color, nothing should be broken
+    assert_eq!(console.color, ColorPair::default());
+    assert_eq!(console.state, State::Default);
+}
+
+#[test]
+fn test_incomplete_escape_sequence_does_not_panic() {
+    let mut console = make_console();
+
+    console.write_string(b"\x1B[");
+
+    // State should be CSI(None), without panic
+    match console.state {
+        State::CSI(CSI::None) => {}
+        _ => panic!("State not stay on CSI::None"),
+    }
+}
+
+#[test]
+fn test_cursor_position_after_scroll() {
+    let mut console = make_console();
+    console.offset = CONSOLE_HISTORY - VGA_HEIGHT - 1;
+    console.cursor.y = VGA_HEIGHT - 1;
+
+    console.scroll_offset_down();
+
+    assert_eq!(console.offset, CONSOLE_HISTORY - VGA_HEIGHT);
+    assert!(console.cursor.y >= console.offset);
+}
+
+#[test]
+fn test_tab_inserts_spaces() {
+    let mut console = make_console();
+    console.write_string(b"\t");
+
+    assert_eq!(console.buffer[0][0].byte, b' ');
+    assert_eq!(console.buffer[0][3].byte, b' ');
+    assert_eq!(console.cursor.x, 4);
 }

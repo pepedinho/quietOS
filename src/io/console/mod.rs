@@ -19,13 +19,14 @@ pub mod writer;
 #[cfg(test)]
 pub mod tests;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CSI {
     None,
     Some(u8),
     Err,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum State {
     Default,
     Esc,

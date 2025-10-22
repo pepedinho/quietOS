@@ -66,7 +66,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct ColorPair {
     pub foreground: Color,
     pub background: Color,
