@@ -1,6 +1,7 @@
+MODE ?= debug
 
 BUILD_DIR  := build
-TARGET_DIR := target/i686-none/debug
+TARGET_DIR := target/i686-none/$(MODE)
 KERNEL     := $(TARGET_DIR)/quiet
 ISO_DIR    := $(BUILD_DIR)/isodir
 ISO        := $(BUILD_DIR)/quiet.iso
@@ -8,6 +9,16 @@ GRUBCFG    := grub.cfg
 QEMU       := qemu-system-i386
 RUSTC      := cargo +nightly
 TARGET     := arch/i686-none.json
+RUST_FLAGS := -Z build-std=core,compiler_builtins --target $(TARGET)
+
+
+ifeq ($(MODE), release)
+	BUILD_FLAGS := --release
+else
+	BUILD_FLAGS :=
+endif
+
+
 
 SRC := $(shell find src -name '*.rs')
 
@@ -65,7 +76,7 @@ draw:
 rust: $(KERNEL)
 
 $(KERNEL): $(SRC)
-	$(RUSTC) build -Z build-std=core,compiler_builtins --target $(TARGET)
+	$(RUSTC) build $(RUST_FLAGS) $(BUILD_FLAGS)
 
 iso: $(ISO)
 
@@ -80,6 +91,9 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 
 run: $(ISO) draw
 	$(QEMU) -cdrom $(ISO) -m 512M
+
+release:
+	$(MAKE) MODE=release
 
 clean:
 	rm -rf $(BUILD_DIR)
