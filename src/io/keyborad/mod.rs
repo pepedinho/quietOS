@@ -48,48 +48,83 @@ pub const QWERTY_SCANCODES: [Option<u8>; 128] = {
     t
 };
 
-const AZERTY_SCANCODES: [Option<u8>; 128] = {
+#[derive(Clone, Copy)]
+pub enum ANSI {
+    Up,
+    Down,
+    Left,
+    Right,
+    Pup,   // page up
+    Pdown, // page down
+}
+
+impl ANSI {
+    pub fn to_seq(&self) -> &'static [u8] {
+        match self {
+            ANSI::Up => &[0x1B, 0x5B, 0x41],
+            ANSI::Down => &[0x1B, 0x5B, 0x42],
+            ANSI::Left => &[0x1B, 0x5B, 0x44],
+            ANSI::Right => &[0x1B, 0x5B, 0x43],
+            ANSI::Pup => &[0x1B, 0x5B, 0x35, 0x7E],
+            ANSI::Pdown => &[0x1B, 0x5B, 0x36, 0x7E],
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum Sequence {
+    ASCII(u8),
+    ANSI(ANSI),
+}
+
+const AZERTY_SCANCODES: [Option<Sequence>; 128] = {
     let mut t = [None; 128];
-    t[0x02] = Some(b'1'); // 1
-    t[0x03] = Some(b'2'); // 2
-    t[0x04] = Some(b'3'); // 3
-    t[0x05] = Some(b'4'); // 4
-    t[0x06] = Some(b'5'); // 5
-    t[0x07] = Some(b'6'); // 6
-    t[0x08] = Some(b'7'); // 7
-    t[0x09] = Some(b'8'); // 8
-    t[0x0A] = Some(b'9'); // 9
-    t[0x0B] = Some(b'0'); // 0
-    t[0x10] = Some(b'a'); // Q -> A
-    t[0x11] = Some(b'z'); // W -> Z
-    t[0x12] = Some(b'e');
-    t[0x13] = Some(b'r');
-    t[0x14] = Some(b't');
-    t[0x15] = Some(b'y');
-    t[0x16] = Some(b'u');
-    t[0x17] = Some(b'i');
-    t[0x18] = Some(b'o');
-    t[0x19] = Some(b'p');
-    t[0x1E] = Some(b'q'); // A -> Q
-    t[0x1F] = Some(b's');
-    t[0x20] = Some(b'd');
-    t[0x21] = Some(b'f');
-    t[0x22] = Some(b'g');
-    t[0x23] = Some(b'h');
-    t[0x24] = Some(b'j');
-    t[0x25] = Some(b'k');
-    t[0x26] = Some(b'l');
-    t[0x27] = Some(b'm');
-    t[0x2C] = Some(b'w'); // Z -> W
-    t[0x2D] = Some(b'x');
-    t[0x2E] = Some(b'c');
-    t[0x2F] = Some(b'v');
-    t[0x30] = Some(b'b');
-    t[0x31] = Some(b'n');
-    t[0x39] = Some(b' '); // space
-    t[0x1C] = Some(b'\n'); // Enter
-    t[0x0E] = Some(8); // Backspace
-    t[0x0F] = Some(b'\t'); // Backspace
+    t[0x02] = Some(Sequence::ASCII(b'1')); // 1
+    t[0x03] = Some(Sequence::ASCII(b'2')); // 2
+    t[0x04] = Some(Sequence::ASCII(b'3')); // 3
+    t[0x05] = Some(Sequence::ASCII(b'4')); // 4
+    t[0x06] = Some(Sequence::ASCII(b'5')); // 5
+    t[0x07] = Some(Sequence::ASCII(b'6')); // 6
+    t[0x08] = Some(Sequence::ASCII(b'7')); // 7
+    t[0x09] = Some(Sequence::ASCII(b'8')); // 8
+    t[0x0A] = Some(Sequence::ASCII(b'9')); // 9
+    t[0x0B] = Some(Sequence::ASCII(b'0')); // 0
+    t[0x10] = Some(Sequence::ASCII(b'a')); // Q -> A
+    t[0x11] = Some(Sequence::ASCII(b'z')); // W -> Z
+    t[0x12] = Some(Sequence::ASCII(b'e'));
+    t[0x13] = Some(Sequence::ASCII(b'r'));
+    t[0x14] = Some(Sequence::ASCII(b't'));
+    t[0x15] = Some(Sequence::ASCII(b'y'));
+    t[0x16] = Some(Sequence::ASCII(b'u'));
+    t[0x17] = Some(Sequence::ASCII(b'i'));
+    t[0x18] = Some(Sequence::ASCII(b'o'));
+    t[0x19] = Some(Sequence::ASCII(b'p'));
+    t[0x1E] = Some(Sequence::ASCII(b'q')); // A -> Q
+    t[0x1F] = Some(Sequence::ASCII(b's'));
+    t[0x20] = Some(Sequence::ASCII(b'd'));
+    t[0x21] = Some(Sequence::ASCII(b'f'));
+    t[0x22] = Some(Sequence::ASCII(b'g'));
+    t[0x23] = Some(Sequence::ASCII(b'h'));
+    t[0x24] = Some(Sequence::ASCII(b'j'));
+    t[0x25] = Some(Sequence::ASCII(b'k'));
+    t[0x26] = Some(Sequence::ASCII(b'l'));
+    t[0x27] = Some(Sequence::ASCII(b'm'));
+    t[0x2C] = Some(Sequence::ASCII(b'w')); // Z -> W
+    t[0x2D] = Some(Sequence::ASCII(b'x'));
+    t[0x2E] = Some(Sequence::ASCII(b'c'));
+    t[0x2F] = Some(Sequence::ASCII(b'v'));
+    t[0x30] = Some(Sequence::ASCII(b'b'));
+    t[0x31] = Some(Sequence::ASCII(b'n'));
+    t[0x48] = Some(Sequence::ANSI(ANSI::Up));
+    t[0x50] = Some(Sequence::ANSI(ANSI::Down));
+    t[0x4B] = Some(Sequence::ANSI(ANSI::Left));
+    t[0x4D] = Some(Sequence::ANSI(ANSI::Right));
+    t[0x49] = Some(Sequence::ANSI(ANSI::Pup));
+    t[0x51] = Some(Sequence::ANSI(ANSI::Pdown));
+    t[0x39] = Some(Sequence::ASCII(b' ')); // space
+    t[0x1C] = Some(Sequence::ASCII(b'\n')); // Enter
+    t[0x0E] = Some(Sequence::ASCII(8)); // Backspace
+    t[0x0F] = Some(Sequence::ASCII(b'\t')); // Backspace
     t
 };
 
@@ -120,7 +155,7 @@ pub trait Read {
     }
 }
 
-fn scancode_to_ascii(scancode: u8) -> Option<u8> {
+fn scancode_to_ascii(scancode: u8) -> Option<Sequence> {
     AZERTY_SCANCODES.get(scancode as usize).copied().flatten()
 }
 
@@ -130,7 +165,15 @@ impl<W: WriterSoul> Console<W> {
             if let Some(scancode) = self.read_byte()
                 && let Some(ch) = scancode_to_ascii(scancode)
             {
-                self.write_string(str::from_utf8(&[ch]).unwrap());
+                match ch {
+                    Sequence::ANSI(e) => {
+                        let seq = e.to_seq();
+                        self.write_string(seq);
+                    }
+                    Sequence::ASCII(ch) => {
+                        self.write_string(&[ch]);
+                    }
+                }
             }
         }
     }

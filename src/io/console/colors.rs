@@ -1,6 +1,6 @@
 use core::fmt::Display;
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, PartialEq, Debug)]
 pub enum Color {
     #[default]
     White,
@@ -66,7 +66,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct ColorPair {
     pub foreground: Color,
     pub background: Color,

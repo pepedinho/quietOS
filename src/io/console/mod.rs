@@ -19,13 +19,14 @@ pub mod writer;
 #[cfg(test)]
 pub mod tests;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CSI {
     None,
     Some(u8),
     Err,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum State {
     Default,
     Esc,
@@ -141,8 +142,8 @@ impl<W: WriterSoul> Console<W> {
         self.writer.write_byte(cell, pos.x, pos.y);
     }
 
-    pub fn write_string(&mut self, s: &str) {
-        s.bytes().for_each(|b| self.handle_byte(b));
+    pub fn write_string(&mut self, s: &[u8]) {
+        s.iter().for_each(|b| self.handle_byte(*b));
         self.flush();
     }
 
@@ -161,15 +162,69 @@ impl<W: WriterSoul> Console<W> {
     fn scroll_offset_down(&mut self) {
         if self.offset < CONSOLE_HISTORY - VGA_HEIGHT {
             self.offset += 1;
+            if self.cursor.y < self.offset {
+                self.cursor.y = self.offset;
+            }
         }
+    }
+
+    fn scroll_offset_up(&mut self) {
+        if self.cursor.y > 0 && self.offset > 0 {
+            self.offset -= 1;
+        }
+    }
+
+    fn cursor_right(&mut self) {
+        if self.cursor.x + 1 > VGA_WIDTH || self.cursor.x >= self.buffer[self.cursor.y].cell_len() {
+            if self.cursor.y < CONSOLE_HISTORY && self.buffer[self.cursor.y + 1].cell_len() != 0 {
+                self.cursor_down();
+            }
+        } else {
+            self.cursor.x += 1;
+            self.writer.move_cursor(&self.cursor, Some(self.offset));
+        }
+    }
+
+    fn cursor_left(&mut self) {
+        if self.cursor.x == 0 {
+            self.cursor_up();
+        } else {
+            self.cursor.x -= 1;
+            self.writer.move_cursor(&self.cursor, Some(self.offset));
+        }
+    }
+
+    fn cursor_up(&mut self) {
+        if self.cursor.y > 0 {
+            self.cursor.x = self.buffer[self.cursor.y - 1].cell_len();
+            self.cursor.y -= 1;
+            if self.cursor.y == self.offset {
+                self.scroll_offset_up();
+            }
+            self.writer.move_cursor(&self.cursor, Some(self.offset));
+        }
+    }
+
+    fn cursor_down(&mut self) {
+        if self.cursor.y + 1 >= CONSOLE_HISTORY {
+            return;
+        }
+        if self.cursor.y < self.offset + VGA_HEIGHT - 1 {
+            self.cursor.x = self.buffer[self.cursor.y + 1].cell_len();
+            self.cursor.y += 1;
+        } else if self.buffer[self.cursor.y + 1].cell_len() != 0 {
+            self.cursor.x = self.buffer[self.cursor.y + 1].cell_len();
+            self.cursor.y += 1;
+            self.scroll_offset_down();
+        }
+        self.writer.move_cursor(&self.cursor, Some(self.offset));
     }
 
     fn back_space(&mut self) {
         if self.cursor.x > 0 {
             self.cursor.x -= 1;
         } else if self.cursor.y > 0 {
-            self.cursor.x = self.buffer[self.cursor.y - 1].cell_len();
-            self.cursor.y -= 1;
+            self.cursor_up();
         }
         self.replace_byte(ERASE_BYTE);
         self.flush();
@@ -182,7 +237,7 @@ impl<W: WriterSoul> Console<W> {
             b'\x1B' => {
                 self.state = State::Esc;
             }
-            b'\t' => self.write_string("    "),
+            b'\t' => self.write_string(b"    "),
             8 => self.back_space(),
             b' '..=b'~' => self.handle_escape_byte(byte),
             _ => {
@@ -259,11 +314,27 @@ impl<W: WriterSoul> Console<W> {
                             CSI::Err => State::CSI(CSI::Err),
                         }
                     }
-                    b'm' => {
-                        match c {
-                            CSI::None | CSI::Err => self.color = ColorPair::default(),
-                            CSI::Some(n) => self.apply_csi(*n),
-                        };
+                    b if (0x40..=0x7E).contains(&b) => {
+                        match b {
+                            b'A' => self.cursor_up(),
+                            b'B' => self.cursor_down(),
+                            b'C' => self.cursor_right(),
+                            b'D' => self.cursor_left(),
+                            b'm' => match c {
+                                CSI::None | CSI::Err => self.color = ColorPair::default(),
+                                CSI::Some(n) => self.apply_csi(*n),
+                            },
+                            b'~' => {
+                                if let CSI::Some(n) = c {
+                                    match n {
+                                        5 => self.scroll_offset_up(),
+                                        6 => self.scroll_offset_down(),
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
                         State::Default
                     }
                     b';' => {
@@ -282,7 +353,7 @@ impl<W: WriterSoul> Console<W> {
 
 impl<W: WriterSoul> Write for Console<W> {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_string(s);
+        self.write_string(s.as_bytes());
         Ok(())
     }
 }
