@@ -5,7 +5,7 @@ use crate::io::{
         utils::U8CellLen,
         writer::WriterSoul,
     },
-    keyborad::Read,
+    keyborad::{Keyboard, Read},
 };
 use core::fmt::Write;
 
@@ -91,6 +91,7 @@ pub struct Console<W: WriterSoul> {
     offset: usize, // the index of the first visible line (all lines behind will be hidden)
 
     writer: W,
+    pub keyboard: Keyboard,
     color: ColorPair,
     state: State,
 }
@@ -103,6 +104,7 @@ impl<W: WriterSoul> Console<W> {
             cursor: Pos::blank(),
             offset: 0,
             writer,
+            keyboard: Keyboard::new(),
             state: State::Default,
             color: ColorPair {
                 foreground: Color::White,
