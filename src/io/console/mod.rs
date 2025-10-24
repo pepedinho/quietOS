@@ -5,7 +5,7 @@ use crate::io::{
         utils::U8CellLen,
         writer::WriterSoul,
     },
-    keyborad::{Keyboard, Read},
+    keyborad::Read,
 };
 use core::fmt::Write;
 
@@ -13,6 +13,7 @@ const ERASE_BYTE: u8 = 0x00;
 const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
+pub mod print;
 pub mod utils;
 pub mod writer;
 
@@ -26,7 +27,7 @@ pub enum CSI {
     Err,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum State {
     Default,
     Esc,
@@ -91,7 +92,6 @@ pub struct Console<W: WriterSoul> {
     offset: usize, // the index of the first visible line (all lines behind will be hidden)
 
     writer: W,
-    pub keyboard: Keyboard,
     color: ColorPair,
     state: State,
 }
@@ -104,7 +104,6 @@ impl<W: WriterSoul> Console<W> {
             cursor: Pos::blank(),
             offset: 0,
             writer,
-            keyboard: Keyboard::new(),
             state: State::Default,
             color: ColorPair {
                 foreground: Color::White,

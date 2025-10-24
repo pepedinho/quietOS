@@ -4,16 +4,21 @@ use crate::io::{
 };
 
 pub mod mocker;
+pub const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
 
+#[derive(Clone, Copy)]
 pub struct Writer {
     buffer: *mut u8,
 }
 
 impl Writer {
-    pub const fn new(buf: *mut u8) -> Self {
-        Self { buffer: buf }
+    #[allow(clippy::new_without_default)]
+    pub const fn new() -> Self {
+        Self { buffer: VGA_BUFFER }
     }
 }
+
+unsafe impl Send for Writer {}
 
 pub trait WriterSoul {
     fn write_byte(&mut self, cell: &Cell, x: usize, y: usize);

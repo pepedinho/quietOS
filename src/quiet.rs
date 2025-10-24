@@ -4,7 +4,7 @@
 use core::panic::PanicInfo;
 
 use quiet::{
-    io::{console::colors::Color, print::CONSOLE},
+    io::console::{colors::Color, print::TTY_TABLE},
     println,
 };
 
@@ -19,10 +19,12 @@ pub extern "C" fn _entrypoint() -> ! {
     );
     println!("+-----------------------------------------+");
     println!("\x1B[34;41mtests\x1B[0m");
-    let console = unsafe { &mut *CONSOLE.console.get() };
-    console.read_stdin();
-    // #[allow(clippy::empty_loop)]
-    // loop {}
+    let mut console = TTY_TABLE.lock();
+
+    loop {
+        console.read_once_in_active();
+    }
+    // console.read_in_active();
 }
 
 #[panic_handler]

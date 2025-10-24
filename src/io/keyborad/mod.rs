@@ -90,12 +90,22 @@ pub enum CHAR {
 }
 
 impl CHAR {
-    pub fn from_state(&self, state: &KeyboardState) -> u8 {
+    pub fn from_state(&self, state: KeyboardState, action: &mut KeyboardActions) -> Option<u8> {
         match self {
             CHAR::C(c) => match state {
-                KeyboardState::CTRL | KeyboardState::ALT | KeyboardState::None => *c,
-                KeyboardState::SHIFT if c.is_ascii_alphabetic() => *c - 32,
-                KeyboardState::SHIFT => *c,
+                KeyboardState::CTRL => {
+                    match c {
+                        b't' => *action = KeyboardActions::TabInc,
+                        b'd' => *action = KeyboardActions::TabDec,
+                        _ => {
+                            // println!("None");
+                        }
+                    }
+                    None
+                }
+                KeyboardState::ALT | KeyboardState::None => Some(*c),
+                KeyboardState::SHIFT if c.is_ascii_alphabetic() => Some(*c - 32),
+                KeyboardState::SHIFT => Some(*c),
             },
         }
     }
@@ -196,8 +206,17 @@ fn scancode_to_ascii(scancode: u8) -> Option<Sequence> {
     AZERTY_SCANCODES.get(scancode as usize).copied().flatten()
 }
 
+#[derive(Clone, Copy)]
+pub enum KeyboardActions {
+    None,
+    TabInc,
+    TabDec,
+}
+
+#[derive(Clone, Copy)]
 pub struct Keyboard {
     state: KeyboardState,
+    action: KeyboardActions,
 }
 
 impl Keyboard {
@@ -205,15 +224,52 @@ impl Keyboard {
     pub const fn new() -> Self {
         Keyboard {
             state: KeyboardState::None,
+            action: KeyboardActions::None,
         }
     }
     pub fn switch_state(&mut self, state: KeyboardState) {
         self.state = state
     }
+
+    pub fn get_action(&self) -> KeyboardActions {
+        self.action
+    }
+
+    pub fn no_action(&mut self) {
+        self.action = KeyboardActions::None
+    }
 }
 
 impl<W: WriterSoul> Console<W> {
-    pub fn read_stdin(&mut self) -> ! {
+    pub fn read_stdin_once(&mut self, keyboard: &mut Keyboard) {
+        loop {
+            if let Some(scancode) = self.read_byte()
+                && let Some(ch) = scancode_to_ascii(scancode)
+            {
+                match ch {
+                    Sequence::ANSI(e) => {
+                        let seq = e.to_seq();
+                        self.write_string(seq);
+                        break;
+                    }
+                    Sequence::ASCII(ch) => {
+                        if let Some(c) = ch.from_state(keyboard.state, &mut keyboard.action) {
+                            self.write_string(&[c]);
+                        } else {
+                            keyboard.state = KeyboardState::None;
+                        }
+                        break;
+                    }
+                    Sequence::StateChange(h) => {
+                        keyboard.switch_state(h);
+                        // break;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn read_stdin(&mut self, keyboard: &mut Keyboard) -> ! {
         loop {
             if let Some(scancode) = self.read_byte()
                 && let Some(ch) = scancode_to_ascii(scancode)
@@ -224,11 +280,14 @@ impl<W: WriterSoul> Console<W> {
                         self.write_string(seq);
                     }
                     Sequence::ASCII(ch) => {
-                        let c = ch.from_state(&self.keyboard.state);
-                        self.write_string(&[c]);
+                        if let Some(c) = ch.from_state(keyboard.state, &mut keyboard.action) {
+                            self.write_string(&[c]);
+                        } else {
+                            keyboard.state = KeyboardState::None;
+                        }
                     }
                     Sequence::StateChange(h) => {
-                        self.keyboard.switch_state(h);
+                        keyboard.switch_state(h);
                     }
                 }
             }
