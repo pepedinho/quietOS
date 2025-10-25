@@ -3,7 +3,7 @@ use core::fmt::Write;
 use crate::{
     io::{
         console::{Console, writer::Writer},
-        keyborad::{Keyboard, KeyboardActions},
+        keyborad::{Convert, Keyboard, KeyboardActions, Sequence},
     },
     sync::mutex::Mutex,
 };
@@ -91,14 +91,33 @@ impl TTY_POOL {
         self.keyboard.no_action();
     }
 
-    pub fn read_in_active(&mut self) -> ! {
+    pub fn print_byte_from_keyboard(&mut self) {
+        let seq = self.keyboard.read_stdin_once();
+
         let console = &mut self.consoles[self.active];
-        console.read_stdin(&mut self.keyboard);
+        match seq {
+            Sequence::ANSI(e) => {
+                let seq = e.to_seq();
+                console.write_string(seq);
+            }
+            Sequence::ASCII(ch) => {
+                if let Some(c) = ch.from_state(self.keyboard.state, &mut self.keyboard.action) {
+                    console.write_string(&[c]);
+                }
+            }
+            Sequence::StateChange(h) => {
+                self.keyboard.switch_state(h);
+            }
+        }
     }
 
+    // pub fn read_in_active(&mut self) -> ! {
+    //     let console = &mut self.consoles[self.active];
+    //     console.read_stdin(&mut self.keyboard);
+    // }
+
     pub fn read_once_in_active(&mut self) {
-        let console = &mut self.consoles[self.active];
-        console.read_stdin_once(&mut self.keyboard);
+        self.print_byte_from_keyboard();
         self.keyboard_action();
     }
 }

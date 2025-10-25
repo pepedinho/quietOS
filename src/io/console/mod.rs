@@ -5,7 +5,6 @@ use crate::io::{
         utils::U8CellLen,
         writer::WriterSoul,
     },
-    keyborad::Read,
 };
 use core::fmt::Write;
 
@@ -359,4 +358,4 @@ impl<W: WriterSoul> Write for Console<W> {
     }
 }
 
-impl<W: WriterSoul> Read for Console<W> {}
+// impl<W: WriterSoul> Read for Console<W> {}

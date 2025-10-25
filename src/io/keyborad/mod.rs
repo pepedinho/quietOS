@@ -1,7 +1,4 @@
-use crate::io::{
-    VGA,
-    console::{Console, writer::WriterSoul},
-};
+use crate::io::VGA;
 
 #[warn(dead_code)]
 pub const QWERTY_SCANCODES: [Option<u8>; 128] = {
@@ -215,8 +212,8 @@ pub enum KeyboardActions {
 
 #[derive(Clone, Copy)]
 pub struct Keyboard {
-    state: KeyboardState,
-    action: KeyboardActions,
+    pub state: KeyboardState,
+    pub action: KeyboardActions,
 }
 
 impl Keyboard {
@@ -240,57 +237,41 @@ impl Keyboard {
     }
 }
 
-impl<W: WriterSoul> Console<W> {
-    pub fn read_stdin_once(&mut self, keyboard: &mut Keyboard) {
+impl Read for Keyboard {}
+
+impl Keyboard {
+    pub fn read_stdin_once(&mut self) -> Sequence {
         loop {
             if let Some(scancode) = self.read_byte()
                 && let Some(ch) = scancode_to_ascii(scancode)
             {
-                match ch {
-                    Sequence::ANSI(e) => {
-                        let seq = e.to_seq();
-                        self.write_string(seq);
-                        break;
-                    }
-                    Sequence::ASCII(ch) => {
-                        if let Some(c) = ch.from_state(keyboard.state, &mut keyboard.action) {
-                            self.write_string(&[c]);
-                        } else {
-                            keyboard.state = KeyboardState::None;
-                        }
-                        break;
-                    }
-                    Sequence::StateChange(h) => {
-                        keyboard.switch_state(h);
-                        // break;
-                    }
-                }
+                return ch;
             }
         }
     }
 
-    pub fn read_stdin(&mut self, keyboard: &mut Keyboard) -> ! {
-        loop {
-            if let Some(scancode) = self.read_byte()
-                && let Some(ch) = scancode_to_ascii(scancode)
-            {
-                match ch {
-                    Sequence::ANSI(e) => {
-                        let seq = e.to_seq();
-                        self.write_string(seq);
-                    }
-                    Sequence::ASCII(ch) => {
-                        if let Some(c) = ch.from_state(keyboard.state, &mut keyboard.action) {
-                            self.write_string(&[c]);
-                        } else {
-                            keyboard.state = KeyboardState::None;
-                        }
-                    }
-                    Sequence::StateChange(h) => {
-                        keyboard.switch_state(h);
-                    }
-                }
-            }
-        }
-    }
+    // pub fn read_stdin(&mut self, keyboard: &mut Keyboard) -> ! {
+    //     loop {
+    //         if let Some(scancode) = self.read_byte()
+    //             && let Some(ch) = scancode_to_ascii(scancode)
+    //         {
+    //             match ch {
+    //                 Sequence::ANSI(e) => {
+    //                     let seq = e.to_seq();
+    //                     self.write_string(seq);
+    //                 }
+    //                 Sequence::ASCII(ch) => {
+    //                     if let Some(c) = ch.from_state(keyboard.state, &mut keyboard.action) {
+    //                         self.write_string(&[c]);
+    //                     } else {
+    //                         keyboard.state = KeyboardState::None;
+    //                     }
+    //                 }
+    //                 Sequence::StateChange(h) => {
+    //                     keyboard.switch_state(h);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
