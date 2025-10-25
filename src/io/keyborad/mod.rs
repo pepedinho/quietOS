@@ -102,6 +102,7 @@ impl CHAR {
                 }
                 KeyboardState::ALT | KeyboardState::None => Some(*c),
                 KeyboardState::SHIFT if c.is_ascii_alphabetic() => Some(*c - 32),
+                KeyboardState::SHIFT if *c == b'<' => Some(*c + 2),
                 KeyboardState::SHIFT => Some(*c),
             },
         }
@@ -153,6 +154,9 @@ const AZERTY_SCANCODES: [Option<Sequence>; 256] = {
     t[0x2F] = Some(Sequence::ASCII(CHAR::C(b'v')));
     t[0x30] = Some(Sequence::ASCII(CHAR::C(b'b')));
     t[0x31] = Some(Sequence::ASCII(CHAR::C(b'n')));
+    t[0x32] = Some(Sequence::ASCII(CHAR::C(b',')));
+    t[0x33] = Some(Sequence::ASCII(CHAR::C(b';')));
+    t[0x56] = Some(Sequence::ASCII(CHAR::C(b'<')));
     t[0x48] = Some(Sequence::ANSI(ANSI::Up));
     t[0x50] = Some(Sequence::ANSI(ANSI::Down));
     t[0x4B] = Some(Sequence::ANSI(ANSI::Left));
