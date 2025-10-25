@@ -1,7 +1,10 @@
-use crate::io::console::{
-    Cell, Console, ERASE_BYTE, Pos, State,
-    colors::{Color, ColorPair},
-    writer::mocker::MockWriter,
+use crate::io::{
+    console::{
+        Cell, Console, ERASE_BYTE, Pos, State,
+        colors::{Color, ColorPair},
+        writer::mocker::MockWriter,
+    },
+    // keyborad::Keyboard,
 };
 
 const TEST_WIDTH: usize = 80;
@@ -17,6 +20,7 @@ pub fn make_console() -> Console<MockWriter> {
             last_pos: None,
             underflow_detected: false,
         },
+        // keyboard: Keyboard::new(),
         color: ColorPair {
             foreground: Color::White,
             background: Color::Black,

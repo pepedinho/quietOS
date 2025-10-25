@@ -5,7 +5,6 @@ use crate::io::{
         utils::U8CellLen,
         writer::WriterSoul,
     },
-    keyborad::Read,
 };
 use core::fmt::Write;
 
@@ -13,6 +12,7 @@ const ERASE_BYTE: u8 = 0x00;
 const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
+pub mod print;
 pub mod utils;
 pub mod writer;
 
@@ -26,7 +26,7 @@ pub enum CSI {
     Err,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum State {
     Default,
     Esc,
@@ -358,4 +358,4 @@ impl<W: WriterSoul> Write for Console<W> {
     }
 }
 
-impl<W: WriterSoul> Read for Console<W> {}
+// impl<W: WriterSoul> Read for Console<W> {}

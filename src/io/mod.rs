@@ -1,6 +1,5 @@
 pub mod console;
 pub mod keyborad;
-pub mod print;
 
 const VGA_WIDTH: usize = 80;
 #[allow(dead_code)]

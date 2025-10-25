@@ -18,8 +18,6 @@ else
 	BUILD_FLAGS :=
 endif
 
-
-
 SRC := $(shell find src -name '*.rs')
 
 CYAN := \033[38;5;217m
