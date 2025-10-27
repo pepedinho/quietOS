@@ -46,23 +46,23 @@ impl ScancodeBuffer {
     }
 }
 
-#[unsafe(no_mangle)]
-pub static mut SCANCODE_BUF: ScancodeBuffer = ScancodeBuffer {
-    buf: [0; BUF_CAP],
-    head: 0,
-    tail: 0,
-};
+unsafe extern "C" {
+    pub unsafe static stack_top: u8;
+    pub unsafe static SCANCODE_BUF: [u8; 1024];
+    static mut SCANCODE_HEAD: u32;
+}
+
+static mut SCANCODE_TAIL: u32 = 0;
 
 pub fn pop_scancode() -> Option<u8> {
     unsafe {
-        let buf = &raw mut SCANCODE_BUF;
-        if (*buf).head == (*buf).tail {
-            None
-        } else {
-            let val = (*buf).buf[(*buf).tail];
-            (*buf).tail = ((*buf).tail + 1) % BUF_CAP;
-            Some(val)
+        if SCANCODE_HEAD == SCANCODE_TAIL {
+            return None;
         }
+        let sc = SCANCODE_BUF[SCANCODE_TAIL as usize];
+        SCANCODE_TAIL = (SCANCODE_TAIL + 1) % BUF_CAP as u32;
+        // let buf = &raw mut SCANCODE_BUF;
+        Some(sc)
     }
 }
 

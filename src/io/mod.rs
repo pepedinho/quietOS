@@ -15,7 +15,7 @@ pub struct VGA {}
 impl VGA {
     /// write byte from I/O port
     #[inline(always)]
-    unsafe fn outb(port: u16, value: u8) {
+    pub unsafe fn outb(port: u16, value: u8) {
         unsafe {
             core::arch::asm!(
                 "out dx, al",
@@ -48,3 +48,6 @@ impl VGA {
         }
     }
 }
+
+#[repr(align(16))]
+pub struct AlignedStack(pub [u8; 4096]);

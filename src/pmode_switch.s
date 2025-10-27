@@ -1,7 +1,9 @@
 section .text
 global _start
 extern _entrypoint
+extern early_init
 extern gdt_descriptor
+extern stack_top
 
 _start:
     cli                     ; Désactive interruptions
@@ -27,7 +29,9 @@ protected_entry:
     mov ss, ax
 
     ; Initialise le stack
-    mov esp, 0x9FC00          ; Exemple : stack au-dessus du boot
+    mov esp, stack_top          ; Exemple : stack au-dessus du boot
+
+    call early_init
 
     sti                         ; Active interruptions
     call _entrypoint           ; Appelle ton entrypoint Rust

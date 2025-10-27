@@ -27,4 +27,8 @@ SECTIONS
         *(COMMON)
         *(.bss*)           /* données non initialisées */
     }
+    .data.rel.ro :
+    {
+        *(.data.rel.ro*)
+    }
 }

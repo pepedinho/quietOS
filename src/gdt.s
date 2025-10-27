@@ -2,9 +2,23 @@ section .data
 align 8
 
 gdt_start:
-    dq 0x0000000000000000      ; Null descriptor
-    dq 0x00CF9A000000FFFF      ; Code segment
-    dq 0x00CF92000000FFFF      ; Data segment
+    ; Null
+    dd 0x0
+    dd 0x0
+    ; Code segment
+    dw 0xFFFF        ; limit low
+    dw 0x0           ; base low
+    db 0x0           ; base middle
+    db 0x9A          ; access
+    db 0xCF          ; granularity + limit high
+    db 0x0           ; base high
+    ; Data segment
+    dw 0xFFFF
+    dw 0x0
+    db 0x0
+    db 0x92          ; access
+    db 0xCF          ; granularity
+    db 0x0           ; base high
 gdt_end:
 
 global gdt_descriptor
