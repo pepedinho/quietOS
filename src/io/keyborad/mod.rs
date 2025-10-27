@@ -1,5 +1,71 @@
 use crate::io::VGA;
 
+pub mod idt;
+pub mod isr;
+pub mod pic;
+
+const BUF_CAP: usize = 1024;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ScancodeBuffer {
+    buf: [u8; BUF_CAP],
+    head: usize,
+    tail: usize,
+}
+
+impl ScancodeBuffer {
+    const fn new() -> Self {
+        Self {
+            buf: [0; BUF_CAP],
+            head: 0,
+            tail: 0,
+        }
+    }
+
+    fn push(&mut self, b: u8) {
+        let next = (self.head + 1) % BUF_CAP;
+        if next != self.tail {
+            self.buf[self.head] = b;
+            self.head = next;
+        }
+    }
+
+    fn pop(&mut self) -> Option<u8> {
+        if self.head == self.tail {
+            None
+        } else {
+            let b = self.buf[self.tail];
+            self.tail = (self.tail + 1) % BUF_CAP;
+            Some(b)
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.head == self.tail
+    }
+}
+
+#[unsafe(no_mangle)]
+pub static mut SCANCODE_BUF: ScancodeBuffer = ScancodeBuffer {
+    buf: [0; BUF_CAP],
+    head: 0,
+    tail: 0,
+};
+
+pub fn pop_scancode() -> Option<u8> {
+    unsafe {
+        let buf = &raw mut SCANCODE_BUF;
+        if (*buf).head == (*buf).tail {
+            None
+        } else {
+            let val = (*buf).buf[(*buf).tail];
+            (*buf).tail = ((*buf).tail + 1) % BUF_CAP;
+            Some(val)
+        }
+    }
+}
+
 #[warn(dead_code)]
 pub const QWERTY_SCANCODES: [Option<u8>; 128] = {
     let mut t = [None; 128];
@@ -203,7 +269,7 @@ pub trait Read {
     }
 }
 
-fn scancode_to_ascii(scancode: u8) -> Option<Sequence> {
+pub fn scancode_to_ascii(scancode: u8) -> Option<Sequence> {
     AZERTY_SCANCODES.get(scancode as usize).copied().flatten()
 }
 

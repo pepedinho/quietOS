@@ -91,8 +91,8 @@ impl TTY_POOL {
         self.keyboard.no_action();
     }
 
-    pub fn print_byte_from_keyboard(&mut self) {
-        let seq = self.keyboard.read_stdin_once();
+    pub fn print_byte_from_keyboard(&mut self, seq: &Sequence) {
+        // let seq = self.keyboard.read_stdin_once();
 
         let console = &mut self.consoles[self.active];
         match seq {
@@ -106,7 +106,7 @@ impl TTY_POOL {
                 }
             }
             Sequence::StateChange(h) => {
-                self.keyboard.switch_state(h);
+                self.keyboard.switch_state(*h);
             }
         }
     }
@@ -116,8 +116,8 @@ impl TTY_POOL {
     //     console.read_stdin(&mut self.keyboard);
     // }
 
-    pub fn read_once_in_active(&mut self) {
-        self.print_byte_from_keyboard();
+    pub fn interpret_byte_from_keyboard(&mut self, seq: &Sequence) {
+        self.print_byte_from_keyboard(seq);
         self.keyboard_action();
     }
 }

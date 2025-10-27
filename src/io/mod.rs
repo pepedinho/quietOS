@@ -40,4 +40,11 @@ impl VGA {
         }
         value
     }
+
+    #[inline(always)]
+    unsafe fn io_wait() {
+        unsafe {
+            core::arch::asm!("out 0x80, al", in("al") 0u8, options(nomem, nostack, preserves_flags));
+        }
+    }
 }

@@ -2,6 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
+    /* On commence à 1 Mo */
     . = 0x00100000;
 
     .multiboot :
@@ -9,24 +10,21 @@ SECTIONS
         KEEP(*(.multiboot))
     }
 
+    /* Code ASM + Rust */
     .text :
     {
-        *(.text*)
-    }
-
-    .rodata :
-    {
-        *(.rodata*)
+        *(.text*)          /* Rust et ASM .text */
+        *(.rodata*)        /* lecture seule */
     }
 
     .data :
     {
-        *(.data*)
+        *(.data*)          /* données initialisées */
     }
 
     .bss :
     {
         *(COMMON)
-        *(.bss*)
+        *(.bss*)           /* données non initialisées */
     }
 }

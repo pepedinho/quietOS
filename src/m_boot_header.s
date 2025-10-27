@@ -10,13 +10,13 @@ stack_bottom:
     resb 16384
 stack_top:
 
-section .text
-global _start
-extern _entrypoint
+; section .text
+; global _start
+; extern _entrypoint
 
-_start:
-    mov esp, stack_top
-    call _entrypoint
+; _start:
+;     mov esp, stack_top
+;     call _entrypoint
 
 .hang:
     cli

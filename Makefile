@@ -90,6 +90,10 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 run: $(ISO) draw
 	$(QEMU) -cdrom $(ISO) -m 512M
 
+drun:
+	$(QEMU) -kernel $(KERNEL) -m 512M -d int,cpu_reset -no-reboot
+
+
 release:
 	$(MAKE) MODE=release
 
