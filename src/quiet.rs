@@ -1,11 +1,12 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
+use core::{panic::PanicInfo, sync::atomic::Ordering};
 
 use quiet::{
     io::console::{colors::Color, print::TTY_TABLE},
     println,
+    sync::mutex::PANIC_IN_PROGRESS,
 };
 
 #[unsafe(no_mangle)]
@@ -29,13 +30,8 @@ pub extern "C" fn _entrypoint() -> ! {
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    if let Some(location) = _info.location() {
-        println!(
-            "panic occurred in file '{}' at line {}",
-            location.file(),
-            location.line(),
-        );
-    }
-    println!("panicked: {}", _info.message());
+    PANIC_IN_PROGRESS.store(true, Ordering::SeqCst);
+    println!("");
+    println!("{_info}");
     loop {}
 }

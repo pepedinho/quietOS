@@ -4,6 +4,8 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+pub static PANIC_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
 pub struct Mutex<T> {
     lock: AtomicBool,
     data: UnsafeCell<T>,
@@ -20,6 +22,9 @@ impl<T> Mutex<T> {
     }
 
     pub fn lock(&self) -> MutexGuard<'_, T> {
+        if PANIC_IN_PROGRESS.load(Ordering::SeqCst) {
+            return MutexGuard { mutex: self };
+        }
         loop {
             if self
                 .lock

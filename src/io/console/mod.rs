@@ -52,7 +52,9 @@ impl Pos {
         self.x += 1;
         if self.x >= VGA_WIDTH {
             self.x = 0;
-            self.y += 1;
+            if self.y < CONSOLE_HISTORY - 1 {
+                self.y += 1;
+            }
             if self.y == offset + VGA_HEIGHT {
                 return true;
             }
@@ -149,7 +151,9 @@ impl<W: WriterSoul> Console<W> {
 
     fn nl(&mut self) {
         self.cursor.x = 0;
-        self.cursor.y += 1;
+        if self.cursor.y < CONSOLE_HISTORY - 1 {
+            self.cursor.y += 1;
+        }
         if self.cursor.y >= VGA_HEIGHT {
             if self.cursor.y == VGA_HEIGHT + self.offset {
                 self.scroll_offset_down();
