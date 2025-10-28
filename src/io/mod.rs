@@ -13,6 +13,14 @@ pub const YELLOW: u8 = 0x0E;
 pub struct VGA {}
 
 impl VGA {
+    /// # Safety
+    /// ```text
+    ///     - Make sure that port is a valid I/O device.
+    ///     - Don't call it unprotected multitasking if the device isn't designed for it.
+    ///     - Avoid ports reserved for the chipset or BIOS.
+    /// ```
+    ///
+    ///
     /// write byte from I/O port
     #[inline(always)]
     pub unsafe fn outb(port: u16, value: u8) {
@@ -39,13 +47,6 @@ impl VGA {
             );
         }
         value
-    }
-
-    #[inline(always)]
-    unsafe fn io_wait() {
-        unsafe {
-            core::arch::asm!("out 0x80, al", in("al") 0u8, options(nomem, nostack, preserves_flags));
-        }
     }
 }
 

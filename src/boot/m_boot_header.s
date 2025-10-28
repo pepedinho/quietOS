@@ -7,7 +7,7 @@ align 4
 section .bss
 align 16
 stack_bottom:
-    resb 16384
+    resb 65536  ; 64Ko
 
 global stack_top
 stack_top:

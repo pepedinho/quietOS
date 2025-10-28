@@ -7,10 +7,11 @@ fn main() {
         let out_dir = env::var("OUT_DIR").unwrap();
 
         let asm_files = [
-            "src/m_boot_header.s",
-            "src/gdt.s",
-            "src/pmode_switch.s",
-            "src/isr_keyboard.s",
+            "src/boot/m_boot_header.s",
+            "src/boot/gdt.s",
+            "src/boot/pmode_switch.s",
+            "src/boot/common_stub.s",
+            "src/boot/irq_wrappers.s",
         ];
 
         for file in &asm_files {
@@ -31,21 +32,22 @@ fn main() {
             println!("cargo:rustc-link-arg={}", obj_path.display());
         }
         let status = Command::new("gcc")
-            .args(["-m32", "-ffreestanding", "-c", "src/early_init.c", "-o"])
+            .args(["-m32", "-ffreestanding", "-c", "src/boot/early_init.c", "-o"])
             .arg(format!("{out_dir}/early_init.o"))
             .status()
             .expect("failed to compile early_init.c");
 
         if !status.success() {
-            panic!("gcc failed on {}", "src/early_init.c");
+            panic!("gcc failed on {}", "src/boot/early_init.c");
         }
 
         println!("cargo:rustc-link-arg={}/early_init.o", out_dir);
 
-        println!("cargo:rerun-if-changed=src/m_boot_header.s");
-        println!("cargo:rerun-if-changed=src/gdt.s");
-        println!("cargo:rerun-if-changed=src/pmode_switch.s");
-        println!("cargo:rerun-if-changed=src/isr_keyboard.s");
-        println!("cargo:rerun-if-changed=src/early_init.c");
+        println!("cargo:rerun-if-changed=src/boot/m_boot_header.s");
+        println!("cargo:rerun-if-changed=src/boot/gdt.s");
+        println!("cargo:rerun-if-changed=src/boot/pmode_switch.s");
+        println!("cargo:rerun-if-changed=src/boot/common_stub.s");
+        println!("cargo:rerun-if-changed=src/boot/irq_wrappers.s");
+        println!("cargo:rerun-if-changed=src/boot/early_init.c");
     }
 }
