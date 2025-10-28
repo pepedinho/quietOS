@@ -32,7 +32,13 @@ fn main() {
             println!("cargo:rustc-link-arg={}", obj_path.display());
         }
         let status = Command::new("gcc")
-            .args(["-m32", "-ffreestanding", "-c", "src/boot/early_init.c", "-o"])
+            .args([
+                "-m32",
+                "-ffreestanding",
+                "-c",
+                "src/boot/early_init.c",
+                "-o",
+            ])
             .arg(format!("{out_dir}/early_init.o"))
             .status()
             .expect("failed to compile early_init.c");

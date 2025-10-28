@@ -53,7 +53,7 @@ unsafe extern "C" {
 pub fn stack_usage() -> usize {
     let esp: usize;
     unsafe {
-        core::arch::asm!("mov {}, esp", out(reg) esp);
+        core::arch::asm!("mov {0:e}, esp", out(reg) esp);
         let stack_top_addr = &stack_top as *const u8 as usize;
         stack_top_addr - esp
     }
