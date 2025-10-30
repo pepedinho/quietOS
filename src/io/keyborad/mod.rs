@@ -100,10 +100,35 @@ impl CHAR {
                     }
                     None
                 }
-                KeyboardState::ALT | KeyboardState::None => Some(*c),
+                KeyboardState::None => Some(*c),
+                KeyboardState::ALT => match c {
+                    b'\'' => Some(b'{'),
+                    b'(' => Some(b'['),
+                    b'-' => Some(b'|'),
+                    b'_' => Some(b'\\'),
+                    b')' => Some(b']'),
+                    b'=' => Some(b'}'),
+                    _ => Some(*c),
+                },
                 KeyboardState::SHIFT if c.is_ascii_alphabetic() => Some(*c - 32),
-                KeyboardState::SHIFT if *c == b'<' => Some(*c + 2),
-                KeyboardState::SHIFT => Some(*c),
+                KeyboardState::SHIFT => match c {
+                    b'<' => Some(*c + 2),
+                    b';' => Some(b'.'),
+                    b',' => Some(b'?'),
+                    b':' => Some(b'/'),
+                    b'&' => Some(b'1'),
+                    b'~' => Some(b'2'),
+                    b'"' => Some(b'3'),
+                    b'\'' => Some(b'4'),
+                    b'(' => Some(b'5'),
+                    b'-' => Some(b'6'),
+                    b'`' => Some(b'7'),
+                    b'_' => Some(b'8'),
+                    b'^' => Some(b'9'),
+                    b'@' => Some(b'0'),
+                    b'=' => Some(b'+'),
+                    _ => Some(*c),
+                },
             },
         }
     }
@@ -118,16 +143,18 @@ pub enum Sequence {
 
 const AZERTY_SCANCODES: [Option<Sequence>; 256] = {
     let mut t = [None; 256];
-    t[0x02] = Some(Sequence::ASCII(CHAR::C(b'1'))); // 1
-    t[0x03] = Some(Sequence::ASCII(CHAR::C(b'2'))); // 2
-    t[0x04] = Some(Sequence::ASCII(CHAR::C(b'3'))); // 3
-    t[0x05] = Some(Sequence::ASCII(CHAR::C(b'4'))); // 4
-    t[0x06] = Some(Sequence::ASCII(CHAR::C(b'5'))); // 5
-    t[0x07] = Some(Sequence::ASCII(CHAR::C(b'6'))); // 6
-    t[0x08] = Some(Sequence::ASCII(CHAR::C(b'7'))); // 7
-    t[0x09] = Some(Sequence::ASCII(CHAR::C(b'8'))); // 8
-    t[0x0A] = Some(Sequence::ASCII(CHAR::C(b'9'))); // 9
-    t[0x0B] = Some(Sequence::ASCII(CHAR::C(b'0'))); // 0
+    t[0x02] = Some(Sequence::ASCII(CHAR::C(b'&'))); // 1
+    t[0x03] = Some(Sequence::ASCII(CHAR::C(b'~'))); // 2
+    t[0x04] = Some(Sequence::ASCII(CHAR::C(b'"'))); // 3
+    t[0x05] = Some(Sequence::ASCII(CHAR::C(b'\''))); // 4
+    t[0x06] = Some(Sequence::ASCII(CHAR::C(b'('))); // 5
+    t[0x07] = Some(Sequence::ASCII(CHAR::C(b'-'))); // 6
+    t[0x08] = Some(Sequence::ASCII(CHAR::C(b'`'))); // 7
+    t[0x09] = Some(Sequence::ASCII(CHAR::C(b'_'))); // 8
+    t[0x0A] = Some(Sequence::ASCII(CHAR::C(b'^'))); // 9
+    t[0x0B] = Some(Sequence::ASCII(CHAR::C(b'@'))); // 0
+    t[0x0C] = Some(Sequence::ASCII(CHAR::C(b')'))); // )
+    t[0x0D] = Some(Sequence::ASCII(CHAR::C(b'='))); // 0
     t[0x10] = Some(Sequence::ASCII(CHAR::C(b'a'))); // Q -> A
     t[0x11] = Some(Sequence::ASCII(CHAR::C(b'z'))); // W -> Z
     t[0x12] = Some(Sequence::ASCII(CHAR::C(b'e')));
@@ -156,6 +183,8 @@ const AZERTY_SCANCODES: [Option<Sequence>; 256] = {
     t[0x31] = Some(Sequence::ASCII(CHAR::C(b'n')));
     t[0x32] = Some(Sequence::ASCII(CHAR::C(b',')));
     t[0x33] = Some(Sequence::ASCII(CHAR::C(b';')));
+    t[0x34] = Some(Sequence::ASCII(CHAR::C(b':')));
+    t[0x35] = Some(Sequence::ASCII(CHAR::C(b'!')));
     t[0x56] = Some(Sequence::ASCII(CHAR::C(b'<')));
     t[0x48] = Some(Sequence::ANSI(ANSI::Up));
     t[0x50] = Some(Sequence::ANSI(ANSI::Down));
