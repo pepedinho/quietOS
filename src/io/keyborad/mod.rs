@@ -175,6 +175,7 @@ const AZERTY_SCANCODES: [Option<Sequence>; 256] = {
     t[0x25] = Some(Sequence::ASCII(CHAR::C(b'k')));
     t[0x26] = Some(Sequence::ASCII(CHAR::C(b'l')));
     t[0x27] = Some(Sequence::ASCII(CHAR::C(b'm')));
+    t[0x2B] = Some(Sequence::ASCII(CHAR::C(b'*')));
     t[0x2C] = Some(Sequence::ASCII(CHAR::C(b'w'))); // Z -> W
     t[0x2D] = Some(Sequence::ASCII(CHAR::C(b'x')));
     t[0x2E] = Some(Sequence::ASCII(CHAR::C(b'c')));

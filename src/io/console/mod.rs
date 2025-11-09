@@ -84,6 +84,10 @@ impl Cell {
     pub fn new(byte: u8, color: ColorPair) -> Self {
         Cell { byte, color }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.byte == 0
+    }
 }
 
 pub struct Console<W: WriterSoul> {
@@ -179,20 +183,26 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn cursor_right(&mut self) {
-        if self.cursor.x + 1 > VGA_WIDTH || self.cursor.x >= self.buffer[self.cursor.y].cell_len() {
+        if self.cursor.x + 1 > VGA_WIDTH
+            || (self.cursor.x >= self.buffer[self.cursor.y].cell_len()
+                && self.buffer[self.cursor.y].cell_len() != 0)
+        {
             if self.cursor.y < CONSOLE_HISTORY && self.buffer[self.cursor.y + 1].cell_len() != 0 {
                 self.cursor_down();
             }
-        } else {
+        } else if self.cursor.x < self.buffer[self.cursor.y].cell_len() {
             self.cursor.x += 1;
             self.writer.move_cursor(&self.cursor, Some(self.offset));
         }
     }
 
     fn cursor_left(&mut self) {
-        if self.cursor.x == 0 {
+        if self.cursor.y > 0
+            && self.cursor.x == 0
+            && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1
+        {
             self.cursor_up();
-        } else {
+        } else if self.cursor.x > 0 {
             self.cursor.x -= 1;
             self.writer.move_cursor(&self.cursor, Some(self.offset));
         }
@@ -209,15 +219,26 @@ impl<W: WriterSoul> Console<W> {
         }
     }
 
+    fn try_cursor_up(&mut self) {
+        if self.cursor.y > 0
+            && self.cursor.x == 0
+            && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1
+        {
+            self.cursor_up();
+        }
+    }
+
     fn cursor_down(&mut self) {
         if self.cursor.y + 1 >= CONSOLE_HISTORY {
             return;
         }
-        if self.cursor.y < self.offset + VGA_HEIGHT - 1 {
-            self.cursor.x = self.buffer[self.cursor.y + 1].cell_len();
+        if self.cursor.y < self.offset + VGA_HEIGHT - 1
+            && !self.buffer[self.cursor.y + 1].is_empty()
+        {
+            self.cursor.x = 0;
             self.cursor.y += 1;
-        } else if self.buffer[self.cursor.y + 1].cell_len() != 0 {
-            self.cursor.x = self.buffer[self.cursor.y + 1].cell_len();
+        } else if !self.buffer[self.cursor.y + 1].is_empty() {
+            self.cursor.x = 0;
             self.cursor.y += 1;
             self.scroll_offset_down();
         }
@@ -320,7 +341,7 @@ impl<W: WriterSoul> Console<W> {
                     }
                     b if (0x40..=0x7E).contains(&b) => {
                         match b {
-                            b'A' => self.cursor_up(),
+                            b'A' => self.try_cursor_up(),
                             b'B' => self.cursor_down(),
                             b'C' => self.cursor_right(),
                             b'D' => self.cursor_left(),
