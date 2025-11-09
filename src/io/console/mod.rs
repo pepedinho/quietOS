@@ -190,7 +190,7 @@ impl<W: WriterSoul> Console<W> {
             if self.cursor.y < CONSOLE_HISTORY && self.buffer[self.cursor.y + 1].cell_len() != 0 {
                 self.cursor_down();
             }
-        } else if !self.buffer[self.cursor.y][self.cursor.x].is_empty() {
+        } else if self.cursor.x < self.buffer[self.cursor.y].cell_len() {
             self.cursor.x += 1;
             self.writer.move_cursor(&self.cursor, Some(self.offset));
         }
