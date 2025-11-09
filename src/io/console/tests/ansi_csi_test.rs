@@ -4,6 +4,7 @@ use crate::io::{
         CONSOLE_HISTORY, CSI, Cell, State,
         colors::{Color, ColorPair},
         tests::buffer_test::make_console,
+        utils::U8CellLen,
     },
 };
 
@@ -12,10 +13,14 @@ fn test_parse_csi_up_arrow() {
     let mut console = make_console();
 
     console.cursor.y = 5;
+    console.buffer[console.cursor.y - 1].fill(Cell::new(b'b', ColorPair::default()));
     console.write_string(b"\x1B[A");
 
     assert_eq!(console.cursor.y, 4);
-    assert_eq!(console.cursor.x, 0);
+    assert_eq!(
+        console.cursor.x,
+        console.buffer[console.cursor.y].cell_len()
+    );
 }
 
 #[test]
@@ -36,7 +41,7 @@ fn test_parse_csi_down_arrow_no_scroll() {
 
     console.write_string(b"\x1B[B");
 
-    assert_eq!(console.cursor.y, 1, "cursor should scroll down");
+    assert_eq!(console.cursor.y, 0, "cursor should no scroll down");
     assert_eq!(console.offset, 0, "offset dont should be change here");
 }
 

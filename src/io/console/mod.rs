@@ -219,6 +219,15 @@ impl<W: WriterSoul> Console<W> {
         }
     }
 
+    fn try_cursor_up(&mut self) {
+        if self.cursor.y > 0
+            && self.cursor.x == 0
+            && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1
+        {
+            self.cursor_up();
+        }
+    }
+
     fn cursor_down(&mut self) {
         if self.cursor.y + 1 >= CONSOLE_HISTORY {
             return;
@@ -332,7 +341,7 @@ impl<W: WriterSoul> Console<W> {
                     }
                     b if (0x40..=0x7E).contains(&b) => {
                         match b {
-                            b'A' => {}
+                            b'A' => self.try_cursor_up(),
                             b'B' => self.cursor_down(),
                             b'C' => self.cursor_right(),
                             b'D' => self.cursor_left(),
