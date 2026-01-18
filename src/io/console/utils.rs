@@ -15,7 +15,7 @@ impl<const N: usize> U8CellLen for [Cell; N] {
     }
 
     fn is_ended(&self) -> bool {
-        self.iter().all(|b| b.byte == b'\n')
+        self.iter().any(|b| b.byte == b'\n')
     }
 
     fn is_empty(&self) -> bool {
