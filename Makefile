@@ -11,6 +11,9 @@ RUSTC      := cargo +nightly
 TARGET     := arch/i686-none.json
 RUST_FLAGS := -Z build-std=core,compiler_builtins --target $(TARGET)
 
+GRUB_FILE := $(shell command -v grub-file 2>/dev/null || command -v i686-elf-grub-file 2>/dev/null)
+GRUB_MKRESCUE := $(shell command -v grub-mkrescue 2>/dev/null || command -v i686-elf-grub-mkrescue 2>/dev/null)
+
 
 ifeq ($(MODE), release)
 	BUILD_FLAGS := --release
@@ -83,8 +86,22 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 	mkdir -p $(ISO_DIR)/boot/grub
 	cp $(KERNEL) $(ISO_DIR)/boot/quietOS
 	cp $(GRUBCFG) $(ISO_DIR)/boot/grub/grub.cfg
-	grub-file --is-x86-multiboot $(ISO_DIR)/boot/quietOS
-	grub-mkrescue --compress=xz -o $(ISO) $(ISO_DIR) --modules="normal multiboot part_msdos ext2"
+
+	@if [ -n "$(GRUB_FILE)" ]; then \
+		echo "==> Checking multiboot header with $(GRUB_FILE)"; \
+		$(GRUB_FILE) --is-x86-multiboot $(ISO_DIR)/boot/quietOS; \
+	else \
+		echo "==> grub-file not found, skipping multiboot check"; \
+	fi
+
+	@if [ -z "$(GRUB_MKRESCUE)" ]; then \
+		echo "ERROR: grub-mkrescue not found"; \
+		exit 1; \
+	fi
+
+	$(GRUB_MKRESCUE) --compress=xz -o $(ISO) $(ISO_DIR) \
+		--modules="normal multiboot part_msdos ext2"
+
 	@echo "ISO created: $(ISO)"
 
 run: $(ISO) draw
