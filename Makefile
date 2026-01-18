@@ -41,7 +41,7 @@ fmt:
 	$(RUSTC) fmt --all -- --check
 
 test:
-	$(RUSTC) test 
+	$(RUSTC) nextest run 
 
 v: check clippy fmt
 

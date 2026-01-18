@@ -13,6 +13,7 @@ const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
 pub mod print;
+pub mod tty;
 pub mod utils;
 pub mod writer;
 
@@ -248,8 +249,10 @@ impl<W: WriterSoul> Console<W> {
     fn back_space(&mut self) {
         if self.cursor.x > 0 {
             self.cursor.x -= 1;
-        } else if self.cursor.y > 0 {
+        } else if self.cursor.y > 0 && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1 {
             self.cursor_up();
+        } else {
+            return; // this is case of start of a new line we want to do nothing
         }
         self.replace_byte(ERASE_BYTE);
         self.flush();
