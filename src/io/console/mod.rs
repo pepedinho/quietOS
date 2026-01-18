@@ -206,10 +206,7 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn cursor_left(&mut self) {
-        if self.cursor.y > 0
-            && self.cursor.x == 0
-            && !self.buffer[self.cursor.y - 1].is_ended()
-        {
+        if self.cursor.y > 0 && self.cursor.x == 0 && !self.buffer[self.cursor.y - 1].is_ended() {
             self.cursor_up();
         } else if self.cursor.x > 0 {
             self.cursor.x -= 1;
@@ -229,10 +226,7 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn try_cursor_up(&mut self) {
-        if self.cursor.y > 0
-            && self.cursor.x == 0
-            && !self.buffer[self.cursor.y - 1].is_ended()
-        {
+        if self.cursor.y > 0 && self.cursor.x == 0 && !self.buffer[self.cursor.y - 1].is_ended() {
             self.cursor_up();
         }
     }
