@@ -167,7 +167,7 @@ impl<W: WriterSoul> Console<W> {
         self.writer.move_cursor(&self.cursor, Some(self.offset));
     }
 
-    fn scroll_offset_down(&mut self) {
+    pub fn scroll_offset_down(&mut self) {
         if self.offset < CONSOLE_HISTORY - VGA_HEIGHT {
             self.offset += 1;
             if self.cursor.y < self.offset {

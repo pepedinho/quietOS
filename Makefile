@@ -6,6 +6,7 @@ KERNEL     := $(TARGET_DIR)/quiet
 ISO_DIR    := $(BUILD_DIR)/isodir
 ISO        := $(BUILD_DIR)/quiet.iso
 GRUBCFG    := grub.cfg
+BENCHGRUB_CFG := bench_grub.cfg
 QEMU       := qemu-system-i386
 RUSTC      := cargo +nightly
 TARGET     := arch/i686-none.json
@@ -101,3 +102,19 @@ clean:
 re: clean run
 
 reb: clean iso
+
+bench:
+	@echo "$(CYAN)==> Building kernel with benchmark feature...$(RESET)"
+	$(RUSTC) build $(RUST_FLAGS) $(BUILD_FLAGS) --features bench
+
+	@echo "$(CYAN)==> Creating ISO with benchmark mode...$(RESET)"
+	mkdir -p $(ISO_DIR)/boot/grub
+	cp $(KERNEL) $(ISO_DIR)/boot/quietOS
+	cp $(BENCHGRUB_CFG) $(ISO_DIR)/boot/grub/grub.cfg
+	grub-mkrescue --compress=xz -o $(ISO) $(ISO_DIR) --modules="normal multiboot part_msdos ext2"
+
+	@echo "$(CYAN)==> Running QEMU and logging output...$(RESET)"
+	mkdir -p logs
+	$(QEMU) -cdrom $(ISO) -m 512M -display curses | tee logs/bench.log
+
+	@echo "$(CYAN)==> Benchmark results saved to logs/bench.log$(RESET)"

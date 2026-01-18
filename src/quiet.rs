@@ -9,6 +9,31 @@ use quiet::{
     sync::mutex::PANIC_IN_PROGRESS,
 };
 
+#[cfg(feature = "bench")]
+#[unsafe(no_mangle)]
+pub extern "C" fn _entrypoint() -> ! {
+    use quiet::bench::*;
+
+    println!("Start benchmark : ");
+    let mut console = TTY_TABLE.lock();
+    let results = [
+        quiet::bench!("write_string", {
+            console
+                .active()
+                .write_string(b"\x1B[34;Welcome to QuietOS\x1B[0m\n again again again\n");
+        }),
+        quiet::bench!("flush", {
+            console.active().flush();
+        }),
+        quiet::bench!("scroll_down", {
+            console.active().scroll_offset_down();
+        }),
+    ];
+    print_results(&results);
+    loop {}
+}
+
+#[cfg(not(feature = "bench"))]
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     println!("+-----------------------------------------+");
