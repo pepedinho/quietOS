@@ -4,7 +4,7 @@
 use core::{panic::PanicInfo, sync::atomic::Ordering};
 
 use quiet::{
-    io::console::{colors::Color, print::TTY_TABLE},
+    io::console::{colors::Color, tty::TTY_TABLE},
     println,
     sync::mutex::PANIC_IN_PROGRESS,
 };

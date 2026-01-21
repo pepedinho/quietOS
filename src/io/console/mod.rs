@@ -13,6 +13,7 @@ const CONSOLE_HISTORY: usize = 100;
 
 pub mod colors;
 pub mod print;
+pub mod tty;
 pub mod utils;
 pub mod writer;
 
@@ -64,6 +65,8 @@ impl Pos {
     }
 }
 
+const UNPRINTABLE: &str = "\n";
+
 #[derive(Clone, Copy)]
 pub struct Cell {
     pub byte: u8,
@@ -87,6 +90,10 @@ impl Cell {
 
     pub fn is_empty(&self) -> bool {
         self.byte == 0
+    }
+
+    pub fn is_printable(&self) -> bool {
+        !UNPRINTABLE.contains(self.byte as char)
     }
 }
 
@@ -134,7 +141,9 @@ impl<W: WriterSoul> Console<W> {
         for row in 0..VGA_HEIGHT {
             for col in 0..VGA_WIDTH {
                 let ch = self.buffer[self.offset + row][col];
-                self.write_byte(&ch, &Pos::new(col, row));
+                if ch.is_printable() {
+                    self.write_byte(&ch, &Pos::new(col, row));
+                }
             }
         }
         self.move_cursor();
@@ -197,10 +206,7 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn cursor_left(&mut self) {
-        if self.cursor.y > 0
-            && self.cursor.x == 0
-            && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1
-        {
+        if self.cursor.y > 0 && self.cursor.x == 0 && !self.buffer[self.cursor.y - 1].is_ended() {
             self.cursor_up();
         } else if self.cursor.x > 0 {
             self.cursor.x -= 1;
@@ -220,10 +226,7 @@ impl<W: WriterSoul> Console<W> {
     }
 
     fn try_cursor_up(&mut self) {
-        if self.cursor.y > 0
-            && self.cursor.x == 0
-            && self.buffer[self.cursor.y - 1].cell_len() == VGA_WIDTH - 1
-        {
+        if self.cursor.y > 0 && self.cursor.x == 0 && !self.buffer[self.cursor.y - 1].is_ended() {
             self.cursor_up();
         }
     }
@@ -248,8 +251,10 @@ impl<W: WriterSoul> Console<W> {
     fn back_space(&mut self) {
         if self.cursor.x > 0 {
             self.cursor.x -= 1;
-        } else if self.cursor.y > 0 {
+        } else if self.cursor.y > 0 && !self.buffer[self.cursor.y - 1].is_ended() {
             self.cursor_up();
+        } else {
+            return; // this is case of start of a new line we want to do nothing
         }
         self.replace_byte(ERASE_BYTE);
         self.flush();
@@ -258,7 +263,10 @@ impl<W: WriterSoul> Console<W> {
 
     fn handle_byte(&mut self, byte: u8) {
         match byte {
-            b'\n' => self.nl(),
+            b'\n' => {
+                self.store_byte(byte);
+                self.nl();
+            }
             b'\x1B' => {
                 self.state = State::Esc;
             }
